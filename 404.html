@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Not found — redirecting</title>
+<script>
+  // Send any unknown path back to the app root (works under a project
+  // subpath like /my-gym-app/ or at a custom-domain root).
+  var base = location.pathname.replace(/\/[^\/]*$/, "/");
+  location.replace(base);
+</script>
+</head>
+<body style="font-family:sans-serif;background:#0f1115;color:#e6e8ec;padding:24px">
+  <p>Page not found. <a href="./" style="color:#4ade80">Go to the app</a>.</p>
+</body>
+</html>
