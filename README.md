@@ -5,8 +5,8 @@ A simple, single-file web app to track the **Day 1** workout from my personalize
 
 ## Use it
 
-Open [`index.html`](index.html) in any browser (double-click, or serve it). Works
-on phone and desktop.
+Open [`docs/index.html`](docs/index.html) in any browser (double-click, or serve
+it). Works on phone and desktop.
 
 - **Tap the numbered buttons** to check off each set as you complete it.
 - **Log weight and reps** per exercise.
@@ -21,19 +21,27 @@ to move data between devices.
 
 ## Exercise images
 
-Each exercise shows an image from the [`images/`](images/) folder, or an "Image
-coming soon" placeholder until one exists. Drop a file in using the filename listed
-in [`images/README.txt`](images/README.txt) and it appears automatically — no code
-changes needed.
+Each exercise shows an image from the [`docs/images/`](docs/images/) folder, or an
+"Image coming soon" placeholder until one exists. Drop a file in using the filename
+listed in [`docs/images/README.txt`](docs/images/README.txt) and it appears
+automatically — no code changes needed.
 
-## Publishing
+## Publishing (GitHub Pages)
 
-Being a static site, it can be hosted for free on **GitHub Pages** as-is.
+The site lives in [`docs/`](docs/). In **Settings → Pages**, set the source to
+**Deploy from a branch**, branch **`main`**, folder **`/docs`**. It serves at
+`https://mohammadb88.github.io/my-gym-app/`.
+
+Note: any push to `main` that changes files under `docs/` triggers a redeploy.
+Pushes that touch only files *outside* `docs/` (this README, the training plan,
+notes) do **not** redeploy — keep work-in-progress outside `docs/` and move it in
+when you're ready to publish.
 
 ## Files
 
-| File | Purpose |
+| Path | Purpose |
 |------|---------|
-| `index.html` | The whole app (HTML + CSS + JS inline) |
-| `images/` | Exercise images (+ naming guide) |
+| `docs/index.html` | The whole app (HTML + CSS + JS inline) — served by Pages |
+| `docs/images/` | Exercise images (+ naming guide) |
+| `docs/404.html`, `docs/.nojekyll` | Pages helpers |
 | `Personalized_3_Day_Gym_Training_Plan.md` | The full training plan this is based on |

@@ -6,15 +6,19 @@ Guidance for Claude Code working in this repo.
 
 A single-file web app to track the **Day 1** workout from a personalized 3-day
 training plan. No build step, no server, no dependencies, no framework — plain
-HTML + CSS + inline JS. To run it, open [`index.html`](index.html) in a browser.
+HTML + CSS + inline JS. To run it, open [`docs/index.html`](docs/index.html) in a
+browser.
 
 ## Layout
 
+The web app lives in `docs/` (GitHub Pages serves this folder — see README).
+
 | Path | Purpose |
 |------|---------|
-| [`index.html`](index.html) | The entire app — HTML, CSS (`<style>`), and JS (`<script>`) all inline |
-| [`images/`](images/) | Exercise images + [`README.txt`](images/README.txt) naming guide |
-| [`404.html`](404.html) | Redirects unknown paths to the app root (for GitHub Pages) |
+| [`docs/index.html`](docs/index.html) | The entire app — HTML, CSS (`<style>`), and JS (`<script>`) all inline |
+| [`docs/images/`](docs/images/) | Exercise images + [`README.txt`](docs/images/README.txt) naming guide |
+| [`docs/404.html`](docs/404.html) | Redirects unknown paths to the app root (for GitHub Pages) |
+| [`docs/.nojekyll`](docs/.nojekyll) | Tells Pages to skip Jekyll processing |
 | [`Personalized_3_Day_Gym_Training_Plan.md`](Personalized_3_Day_Gym_Training_Plan.md) | The source training plan the app is based on |
 
 ## How it works
@@ -29,7 +33,7 @@ HTML + CSS + inline JS. To run it, open [`index.html`](index.html) in a browser.
 - Export/import is CSV, keyed by `exercise_num` so it's robust to reordering.
   There's a hand-rolled quoted-cell parser (`parseCsvLine`) — no libraries.
 - Images load lazily; a missing image triggers `onerror` → "Image coming soon"
-  placeholder. Add a file to `images/` matching the `img:` path and it appears.
+  placeholder. Add a file to `docs/images/` matching the `img:` path and it appears.
 
 ## Conventions
 
@@ -37,4 +41,4 @@ HTML + CSS + inline JS. To run it, open [`index.html`](index.html) in a browser.
   manager, or framework unless the user explicitly asks.
 - Mobile-first: dark theme via CSS vars, safe-area insets, 16px inputs (avoids
   iOS zoom), 44px+ tap targets. Preserve these when editing styles.
-- No test suite or lint config — verify changes by opening `index.html`.
+- No test suite or lint config — verify changes by opening `docs/index.html`.
