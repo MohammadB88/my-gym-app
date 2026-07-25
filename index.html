@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0f1115">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Day 1 — Full-Body Training</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --card: #1a1d24;
+    --card2: #22262f;
+    --text: #e6e8ec;
+    --muted: #9aa0ac;
+    --accent: #4ade80;
+    --accent-dim: #2a3b30;
+    --line: #2c313b;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    max-width: 640px;
+    margin: 0 auto;
+    /* Respect the notch / rounded corners on modern phones */
+    padding: 12px max(14px, env(safe-area-inset-right)) calc(24px + env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  header { margin-bottom: 8px; }
+  h1 { font-size: 1.4rem; margin: 0 0 4px; }
+  .sub { color: var(--muted); font-size: 0.85rem; margin: 0; }
+
+  .progress-wrap {
+    position: sticky; top: 0; z-index: 5;
+    background: var(--bg); padding: 12px 0 10px;
+    /* Cover the gap that appears when the card scrolls under the sticky bar */
+    box-shadow: 0 8px 8px -4px var(--bg);
+  }
+  .bar { height: 8px; background: var(--card2); border-radius: 99px; overflow: hidden; }
+  .bar > span { display: block; height: 100%; width: 0; background: var(--accent); transition: width .25s ease; }
+  .progress-label { font-size: 0.8rem; color: var(--muted); margin: 6px 0 0; }
+
+  .exercise {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 14px 14px 10px;
+    margin-bottom: 12px;
+    overflow-wrap: break-word;
+  }
+  .exercise.done { border-color: var(--accent-dim); }
+
+  .ex-img {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 2 / 1;
+    max-height: 200px;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 12px;
+    background: var(--card2);
+  }
+  .ex-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  /* Placeholder is hidden by default; shown only when the <img> fails to load */
+  .ex-img-ph { display: none; }
+  .ex-img.missing {
+    display: flex; align-items: center; justify-content: center;
+    background:
+      repeating-linear-gradient(45deg, var(--card2) 0 12px, #1e222b 12px 24px);
+    border: 1px dashed var(--line);
+  }
+  .ex-img.missing .ex-img-ph {
+    display: block; color: var(--muted); font-size: 0.8rem; letter-spacing: .02em;
+  }
+  .ex-head { display: flex; align-items: baseline; gap: 8px; }
+  .ex-num {
+    font-size: 0.75rem; font-weight: 700; color: var(--accent);
+    background: var(--accent-dim); padding: 2px 7px; border-radius: 6px; flex: none;
+  }
+  .ex-name { font-weight: 600; font-size: 1rem; line-height: 1.25; }
+  .ex-meta { color: var(--muted); font-size: 0.8rem; margin: 6px 0 2px; }
+  .cue { color: var(--muted); font-size: 0.78rem; line-height: 1.4; margin: 8px 0 10px; }
+
+  .sets { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+  .set-btn {
+    width: 46px; height: 46px; border-radius: 10px;
+    border: 1px solid var(--line); background: var(--card2);
+    color: var(--muted); font-size: 1rem; font-weight: 600;
+    cursor: pointer; transition: all .12s ease; touch-action: manipulation;
+  }
+  .set-btn.on {
+    background: var(--accent); color: #0b1f14; border-color: var(--accent);
+  }
+
+  .log { display: flex; gap: 8px; }
+  .log input {
+    flex: 1; min-width: 0;
+    background: var(--card2); border: 1px solid var(--line);
+    color: var(--text); border-radius: 10px; padding: 11px 12px;
+    /* 16px prevents iOS Safari from auto-zooming when the field is focused */
+    font-size: 16px;
+  }
+  .log input::placeholder { color: #6b717d; }
+  .log input:focus { outline: none; border-color: var(--accent); }
+
+  /* Two CSV buttons share the top row; Reset gets its own full-width row.
+     Grid keeps this stable at every phone width — no overflow, no clipping. */
+  .footer {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px; margin: 8px 0 24px;
+  }
+  .footer button {
+    min-height: 48px; padding: 12px 8px; border-radius: 12px;
+    border: 1px solid var(--line); font-size: 0.9rem; cursor: pointer;
+    touch-action: manipulation; white-space: nowrap;
+  }
+  button.act { background: var(--accent-dim); color: var(--accent); border-color: var(--accent-dim); }
+  button.act:active { background: #33513e; }
+  button.reset { background: var(--card); color: var(--muted); grid-column: 1 / -1; }
+  button.reset:active { background: var(--card2); }
+  .done-badge { color: var(--accent); font-size: 0.8rem; margin-left: auto; align-self: center; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Day 1 — Full-Body</h1>
+  <p class="sub">Machine-focused · 2–3 reps in reserve · knee-conscious</p>
+</header>
+
+<div class="progress-wrap">
+  <div class="bar"><span id="barFill"></span></div>
+  <p class="progress-label" id="progressLabel">0 of 25 sets done</p>
+</div>
+
+<div id="list"></div>
+
+<div class="footer">
+  <button class="act" id="exportBtn">⬇ Export CSV</button>
+  <button class="act" id="importBtn">⬆ Import CSV</button>
+  <button class="reset" id="resetBtn">Reset</button>
+  <input type="file" id="importFile" accept=".csv" hidden>
+</div>
+
+<script>
+// Day 1 exercises from the training plan.
+// `img` points to a file in the images/ folder. Drop a matching image there
+// and it appears automatically; until then a placeholder is shown.
+const EXERCISES = [
+  { n: "1",  name: "Neutral-Grip Lat Pulldown Machine", scheme: "3 × 8–12 · 90s rest", sets: 3, cue: "Pull toward the upper chest. Keep ribs controlled, avoid excessive backward lean, don't pull behind the neck.", img: "images/01-lat-pulldown.jpg" },
+  { n: "2",  name: "Machine Chest Press", scheme: "3 × 8–10 · 90s rest", sets: 3, cue: "Handles near mid-chest. Shoulder blades gently set; stop before form changes.", img: "images/02-chest-press.jpg" },
+  { n: "3",  name: "Hip Thrust / Glute Bridge Machine", scheme: "3 × 8–12 · 90–120s rest", sets: 3, cue: "Drive through the feet, finish with the glutes. Avoid excessive lower-back arching.", img: "images/03-hip-thrust.jpg" },
+  { n: "4",  name: "Lying Leg Curl", scheme: "3 × 10–12 · 75–90s rest", sets: 3, cue: "Align knee with the machine pivot. Curl smoothly without lifting hips from the pad.", img: "images/04-lying-leg-curl.jpg" },
+  { n: "5",  name: "Reverse Pec Deck / Rear-Delt", scheme: "2 × 12–15 · 60–75s rest", sets: 2, cue: "Chest against the pad. Move upper arms back without shrugging or forcing range.", img: "images/05-reverse-pec-deck.jpg" },
+  { n: "6",  name: "Seated Overhead Press", scheme: "2 × 8–10 · 90s rest", sets: 2, cue: "Comfortable grip and range. Back supported; avoid forcefully locking the elbows.", img: "images/06-overhead-press.jpg" },
+  { n: "7",  name: "Seated Leg Extension", scheme: "2 × 12–15 · 60–75s rest", sets: 2, cue: "Light load, pain-free controlled range. No swinging, don't force full extension.", img: "images/07-leg-extension.jpg" },
+  { n: "8",  name: "Hip Abductor Machine", scheme: "2 × 12–15 · 60s rest", sets: 2, cue: "Torso still, open the legs under control. Don't bounce at the end of range.", img: "images/08-hip-abductor.jpg" },
+  { n: "9",  name: "Hip Adductor Machine", scheme: "1–2 × 12–15 · 60s rest", sets: 2, cue: "Moderate, comfortable start. Bring the legs together slowly.", img: "images/09-hip-adductor.jpg" },
+  { n: "10A", name: "Machine Biceps Curl", scheme: "2 × 10–12 · alternating pair", sets: 2, cue: "Align elbows with pivot. Avoid shoulder movement and forceful lockout. Pair with 10B.", img: "images/10a-biceps-curl.jpg" },
+  { n: "10B", name: "Triceps Extension / Pressdown", scheme: "2 × 10–12 · 60–75s after pair", sets: 2, cue: "Elbows controlled, shoulders relaxed. No torso momentum. Pair with 10A.", img: "images/10b-triceps-extension.jpg" },
+  { n: "11", name: "Pallof Press / Dead Bug", scheme: "2–3 × 8–10 per side · 45–60s rest", sets: 3, cue: "Brace gently; keep pelvis and rib cage controlled. Stability over load or speed.", img: "images/11-pallof-press.jpg" },
+];
+
+const STORE_KEY = "gym-day1-v1";
+const totalSets = EXERCISES.reduce((s, e) => s + e.sets, 0);
+
+// state: { sets: { "0-1": true }, log: { "0": {w:"", r:""} } }
+let state = load();
+
+function load() {
+  try {
+    return JSON.parse(localStorage.getItem(STORE_KEY)) || { sets: {}, log: {} };
+  } catch { return { sets: {}, log: {} }; }
+}
+function save() { localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
+
+const list = document.getElementById("list");
+
+function render() {
+  list.innerHTML = "";
+  EXERCISES.forEach((ex, i) => {
+    const doneSets = countDone(i);
+    const complete = doneSets === ex.sets;
+
+    const card = document.createElement("div");
+    card.className = "exercise" + (complete ? " done" : "");
+
+    const setBtns = Array.from({ length: ex.sets }, (_, s) => {
+      const on = state.sets[`${i}-${s}`];
+      return `<button class="set-btn ${on ? "on" : ""}" data-ex="${i}" data-set="${s}">${s + 1}</button>`;
+    }).join("");
+
+    const log = state.log[i] || {};
+    card.innerHTML = `
+      <div class="ex-img">
+        <img src="${ex.img}" alt="${ex.name}" loading="lazy"
+             onerror="this.parentElement.classList.add('missing'); this.remove();">
+        <span class="ex-img-ph">Image coming soon</span>
+      </div>
+      <div class="ex-head">
+        <span class="ex-num">${ex.n}</span>
+        <span class="ex-name">${ex.name}</span>
+        ${complete ? '<span class="done-badge">✓ done</span>' : ""}
+      </div>
+      <div class="ex-meta">${ex.scheme}</div>
+      <div class="cue">${ex.cue}</div>
+      <div class="sets">${setBtns}</div>
+      <div class="log">
+        <input type="text" inputmode="decimal" placeholder="Weight" data-log="w" data-ex="${i}" value="${log.w || ""}">
+        <input type="text" inputmode="numeric" placeholder="Reps" data-log="r" data-ex="${i}" value="${log.r || ""}">
+      </div>`;
+    list.appendChild(card);
+  });
+  updateProgress();
+}
+
+function countDone(i) {
+  let c = 0;
+  for (let s = 0; s < EXERCISES[i].sets; s++) if (state.sets[`${i}-${s}`]) c++;
+  return c;
+}
+
+function updateProgress() {
+  const done = Object.values(state.sets).filter(Boolean).length;
+  const pct = Math.round((done / totalSets) * 100);
+  document.getElementById("barFill").style.width = pct + "%";
+  document.getElementById("progressLabel").textContent =
+    `${done} of ${totalSets} sets done${done === totalSets ? " — session complete 💪" : ""}`;
+}
+
+// Event delegation
+list.addEventListener("click", (e) => {
+  const btn = e.target.closest(".set-btn");
+  if (!btn) return;
+  const key = `${btn.dataset.ex}-${btn.dataset.set}`;
+  state.sets[key] = !state.sets[key];
+  save();
+  render();
+});
+
+list.addEventListener("input", (e) => {
+  const inp = e.target.closest("input[data-log]");
+  if (!inp) return;
+  const i = inp.dataset.ex;
+  state.log[i] = state.log[i] || {};
+  state.log[i][inp.dataset.log] = inp.value;
+  save();
+});
+
+document.getElementById("resetBtn").addEventListener("click", () => {
+  if (confirm("Clear all checked sets and logged weights?")) {
+    state = { sets: {}, log: {} };
+    save();
+    render();
+  }
+});
+
+// ---- CSV export / import ----
+// One row per exercise: number, name, sets done, weight, reps, date.
+function csvCell(v) {
+  v = String(v ?? "");
+  return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
+}
+
+document.getElementById("exportBtn").addEventListener("click", () => {
+  const today = new Date().toISOString().slice(0, 10);
+  const header = ["exercise_num", "exercise_name", "sets_done", "total_sets", "weight", "reps", "date"];
+  const rows = EXERCISES.map((ex, i) => {
+    const log = state.log[i] || {};
+    return [ex.n, ex.name, countDone(i), ex.sets, log.w || "", log.r || "", today].map(csvCell).join(",");
+  });
+  const csv = header.join(",") + "\n" + rows.join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `gym-day1-${today}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+document.getElementById("importBtn").addEventListener("click", () =>
+  document.getElementById("importFile").click());
+
+document.getElementById("importFile").addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      applyCsv(reader.result);
+      save();
+      render();
+      alert("Imported. Weights, reps and completed sets were restored.");
+    } catch (err) {
+      alert("Could not read that file. Make sure it's a CSV exported from this app.");
+    }
+    e.target.value = ""; // allow re-importing the same file
+  };
+  reader.readAsText(file);
+});
+
+// Minimal CSV parser that handles quoted cells. Matches rows to exercises by
+// exercise_num, so it's robust to reordering.
+function applyCsv(text) {
+  const lines = text.replace(/\r/g, "").split("\n").filter((l) => l.trim() !== "");
+  const head = parseCsvLine(lines[0]);
+  const col = (name) => head.indexOf(name);
+  const iNum = col("exercise_num"), iDone = col("sets_done"),
+        iW = col("weight"), iR = col("reps");
+  const byNum = {};
+  EXERCISES.forEach((ex, i) => (byNum[ex.n] = i));
+
+  const fresh = { sets: {}, log: {} };
+  for (let r = 1; r < lines.length; r++) {
+    const cells = parseCsvLine(lines[r]);
+    const i = byNum[cells[iNum]];
+    if (i === undefined) continue;
+    fresh.log[i] = { w: cells[iW] || "", r: cells[iR] || "" };
+    const done = Math.min(parseInt(cells[iDone], 10) || 0, EXERCISES[i].sets);
+    for (let s = 0; s < done; s++) fresh.sets[`${i}-${s}`] = true;
+  }
+  state = fresh;
+}
+
+function parseCsvLine(line) {
+  const out = [];
+  let cur = "", inQ = false;
+  for (let k = 0; k < line.length; k++) {
+    const ch = line[k];
+    if (inQ) {
+      if (ch === '"' && line[k + 1] === '"') { cur += '"'; k++; }
+      else if (ch === '"') inQ = false;
+      else cur += ch;
+    } else if (ch === '"') inQ = true;
+    else if (ch === ",") { out.push(cur); cur = ""; }
+    else cur += ch;
+  }
+  out.push(cur);
+  return out;
+}
+
+render();
+</script>
+</body>
+</html>
