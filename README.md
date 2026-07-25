@@ -3,9 +3,12 @@
 A simple, single-file web app to track the **Day 1** workout from my personalized
 3-day training plan. No build step, no server, no dependencies — just open it.
 
+**▶ Live app: https://mohammadb88.github.io/my-gym-app/**
+
 ## Use it
 
-Open [`docs/index.html`](docs/index.html) in any browser (double-click, or serve
+Open the [live app](https://mohammadb88.github.io/my-gym-app/), or run it locally by
+opening [`docs/index.html`](docs/index.html) in any browser (double-click, or serve
 it). Works on phone and desktop.
 
 - **Tap the numbered buttons** to check off each set as you complete it.
