@@ -1,0 +1,40 @@
+# CLAUDE.md
+
+Guidance for Claude Code working in this repo.
+
+## What this is
+
+A single-file web app to track the **Day 1** workout from a personalized 3-day
+training plan. No build step, no server, no dependencies, no framework — plain
+HTML + CSS + inline JS. To run it, open [`index.html`](index.html) in a browser.
+
+## Layout
+
+| Path | Purpose |
+|------|---------|
+| [`index.html`](index.html) | The entire app — HTML, CSS (`<style>`), and JS (`<script>`) all inline |
+| [`images/`](images/) | Exercise images + [`README.txt`](images/README.txt) naming guide |
+| [`404.html`](404.html) | Redirects unknown paths to the app root (for GitHub Pages) |
+| [`Personalized_3_Day_Gym_Training_Plan.md`](Personalized_3_Day_Gym_Training_Plan.md) | The source training plan the app is based on |
+
+## How it works
+
+- The workout is a `const EXERCISES` array near the top of the `<script>`. Each
+  entry has `n` (label), `name`, `scheme`, `sets` (count), `cue`, and `img` path.
+  **To change exercises, edit this array** — the UI renders from it.
+- State (`{ sets: {...}, log: {...} }`) persists to `localStorage` under
+  `STORE_KEY` (`gym-day1-v1`). Bump the key if you change the state shape.
+- `render()` rebuilds the DOM from state; click/input are handled via event
+  delegation on `#list`. Call `save()` then `render()` after mutating `state`.
+- Export/import is CSV, keyed by `exercise_num` so it's robust to reordering.
+  There's a hand-rolled quoted-cell parser (`parseCsvLine`) — no libraries.
+- Images load lazily; a missing image triggers `onerror` → "Image coming soon"
+  placeholder. Add a file to `images/` matching the `img:` path and it appears.
+
+## Conventions
+
+- **Keep it dependency-free and single-file.** Don't add a build tool, package
+  manager, or framework unless the user explicitly asks.
+- Mobile-first: dark theme via CSS vars, safe-area insets, 16px inputs (avoids
+  iOS zoom), 44px+ tap targets. Preserve these when editing styles.
+- No test suite or lint config — verify changes by opening `index.html`.
