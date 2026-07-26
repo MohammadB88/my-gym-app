@@ -95,6 +95,12 @@
   .ex-name { font-weight: 600; font-size: 1rem; line-height: 1.25; }
   .ex-meta { color: var(--muted); font-size: 0.8rem; margin: 6px 0 2px; }
   .cue { color: var(--muted); font-size: 0.78rem; line-height: 1.4; margin: 8px 0 10px; }
+  .tg-link {
+    display: inline-block; margin: 0 0 12px;
+    color: var(--accent); font-size: 0.78rem; text-decoration: none;
+    border-bottom: 1px solid transparent;
+  }
+  .tg-link:hover { border-bottom-color: var(--accent); }
 
   .sets { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
   .set-btn {
@@ -261,6 +267,30 @@ document.getElementById("tabs").addEventListener("click", (e) => {
 
 const list = document.getElementById("list");
 
+// Build a "find this machine on Technogym" link. Technogym's own on-site search
+// URL isn't stable and the site blocks direct linking guesses, so we route
+// through a Google site-search scoped to their German catalogue — always resolves
+// and lands on the relevant current product. We clean the exercise name into a
+// good query (drop "/ alternatives", parenthetical notes, and generic words).
+function technogymQuery(name) {
+  let q = name
+    .split("/")[0]                       // keep the primary machine, drop alternates
+    .replace(/\(.*?\)/g, "")             // drop parenthetical notes
+    .replace(/\b(Machine|Seated|Lying|Standing|Neutral-Grip|Reverse)\b/gi, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  // If stripping left too little (e.g. "Machine Hammer / … Curl" → "Hammer"),
+  // fall back to the fuller name minus just the parenthetical/alternate.
+  if (q.split(" ").length < 2) {
+    q = name.replace(/\(.*?\)/g, "").replace(/\s*\/.*$/, "").trim();
+  }
+  return q;
+}
+function technogymLink(name) {
+  const q = `${technogymQuery(name)} site:technogym.com/de-DE`;
+  return "https://www.google.com/search?q=" + encodeURIComponent(q);
+}
+
 function render() {
   list.innerHTML = "";
   EXERCISES.forEach((ex, i) => {
@@ -289,6 +319,9 @@ function render() {
       </div>
       <div class="ex-meta">${ex.scheme}</div>
       <div class="cue">${ex.cue}</div>
+      <a class="tg-link" href="${technogymLink(ex.name)}" target="_blank" rel="noopener noreferrer">
+        Find this machine on Technogym ↗
+      </a>
       <div class="sets">${setBtns}</div>
       <div class="log">
         <input type="text" inputmode="decimal" placeholder="Weight" data-log="w" data-ex="${i}" value="${log.w || ""}">
