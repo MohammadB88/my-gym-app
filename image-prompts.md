@@ -1,7 +1,17 @@
 # Exercise Image Prompts — 3-Day Plan
 
-Prompts for generating instructional exercise photos for the training plan.
-Day 1 images are already added; Day 2 and Day 3 are still needed.
+Prompts for generating instructional exercise photos for the training plan —
+one per exercise, all three days. Generate each with an AI image tool and save
+it to the path shown in its heading; the app picks it up automatically.
+
+Each machine prompt is written to match the specific Technogym machine linked
+from that exercise's card in the app, so the generated image and the "View this
+machine on Technogym" link stay consistent. The two bodyweight core moves
+(Day 2 Side Plank/Bird Dog, Day 3 Dead Bug) are mat exercises with no machine.
+
+**Copyright:** these are AI-generated illustrations, free of third-party rights —
+safe to bundle and publish with the app. (Do not substitute manufacturer product
+photos, which are copyrighted.)
 
 **Shared style (applies to every prompt below):** Photorealistic landscape photo (16:9), clean modern gym, bright even natural lighting with soft daylight from large windows, shallow depth of field, neutral athletic clothing with no logos, encouraging professional fitness-instruction aesthetic. Ultra-detailed, high resolution, anatomically correct hands and body proportions, realistic muscle definition. Correct, safe textbook form.
 
@@ -104,12 +114,12 @@ Layout: one folder per day — `docs/images/d<day>/<num>-<slug>.jpg`.
 
 ---
 
-## 10B — Machine Triceps Extension / Cable Pressdown
+## 10B — Machine Triceps Extension
 `docs/images/d1/10b-triceps-extension.jpg`
 
-**Prompt:** A fit adult performing a triceps cable pressdown (or machine triceps extension). Standing tall at a cable station with a straight or rope attachment, upper arms tucked close to the sides and elbows fixed, pressing the handle down to near full extension and squeezing the triceps, then returning under control. Shoulders relaxed, torso upright without leaning to add momentum. Side camera angle showing the fixed elbows and triceps engagement.
+**Prompt:** A fit adult performing a seated machine triceps (arm) extension on a selectorized machine. Seated with back against the pad and the upper arms resting on the angled front pad, elbows aligned with the machine pivot, gripping the handles and extending the forearms down/forward to near full extension to squeeze the triceps, then returning under control. Shoulders relaxed and still, no torso momentum. Side three-quarter camera angle showing the fixed upper arms on the pad and triceps engagement. Weight stack softly visible in the background.
 
-**Avoid also:** elbows drifting forward or flaring, torso rocking to push the weight, hunched shoulders.
+**Avoid also:** standing cable-station setup, elbows lifting off the pad, torso rocking to push the weight, hunched shoulders, forceful lockout.
 
 ---
 
@@ -160,12 +170,12 @@ Layout: one folder per day — `docs/images/d<day>/<num>-<slug>.jpg`.
 
 ---
 
-## 05 — Machine Pullover / Straight-Arm Pulldown
+## 05 — Machine Pullover
 `docs/images/d2/05-pullover.jpg`
 
-**Prompt:** A fit adult performing a straight-arm cable pulldown (or machine pullover). Standing tall at a cable station with a straight bar, arms nearly straight overhead, sweeping the bar down in an arc toward the thighs by driving through the shoulders and lats — ribs controlled, minimal elbow bend. Side camera angle showing the long arc and lat engagement.
+**Prompt:** A fit adult performing a pullover on a seated plate-loaded pullover machine. Seated with back against the pad and a lap belt/thigh support, upper arms against the movement pads with hands lightly holding the bar overhead, sweeping the arms down and forward in a long arc by driving through the lats and shoulders — ribs controlled, minimal elbow bend held constant. Side camera angle showing the long arc of the arms and lat engagement. Plate-loaded machine frame softly visible in the background.
 
-**Avoid also:** bending the elbows into a triceps press, arching or flaring the ribs, hunching the shoulders, using momentum.
+**Avoid also:** standing cable-station setup, bending the elbows into a triceps press, arching or flaring the ribs, hunching the shoulders, using momentum.
 
 ---
 
@@ -234,12 +244,12 @@ Layout: one folder per day — `docs/images/d<day>/<num>-<slug>.jpg`.
 
 # Day 3 — Strength + Control  ⬜ (needed)
 
-## 01 — High Row Machine
+## 01 — High Row Machine (Vertical Traction)
 `docs/images/d3/01-high-row.jpg`
 
-**Prompt:** A fit adult performing a high row on a chest-supported machine. Seated leaning into the chest pad, gripping the high handles and pulling down and back toward the mid-torso, squeezing the upper back — no leaning or shrugging. Side three-quarter camera angle showing the downward-and-back pull path and lat/upper-back engagement.
+**Prompt:** A fit adult performing a high row / vertical traction pull on a selectorized machine. Seated upright with thighs secured under the knee pad, reaching up to grip the high overhead handles with arms extended, then pulling down and slightly back toward the shoulders/upper chest to squeeze the lats and upper back — torso staying upright, no heavy lean or shrug. Side-front three-quarter camera angle showing the overhead-to-shoulder pull path and lat/upper-back engagement. Weight stack softly visible in the background.
 
-**Avoid also:** leaning the torso back to heave, shrugging the shoulders, chest lifting off the pad, rounding the spine.
+**Avoid also:** chest-supported/prone row setup, leaning the torso back to heave, shrugging the shoulders, rounding the spine, standing position.
 
 ---
 
@@ -324,12 +334,12 @@ Layout: one folder per day — `docs/images/d<day>/<num>-<slug>.jpg`.
 
 ---
 
-## 10B — Machine Triceps Extension / Cable Pressdown
+## 10B — Machine Triceps Extension
 `docs/images/d3/10b-triceps-extension.jpg`
 
-**Prompt:** A fit adult performing a triceps cable pressdown (or machine triceps extension). Upper arms tucked close to the sides with elbows fixed, pressing the handle down to near full extension and squeezing the triceps, then returning under control. Torso upright and still, shoulders relaxed. Side camera angle showing the fixed elbows and triceps engagement.
+**Prompt:** A fit adult performing a seated machine triceps (arm) extension on a selectorized machine. Seated with back against the pad and the upper arms resting on the angled front pad, elbows aligned with the machine pivot, gripping the handles and extending the forearms down/forward to near full extension to squeeze the triceps, then returning under control. Torso upright and still, shoulders relaxed. Side three-quarter camera angle showing the fixed upper arms on the pad and triceps engagement. Weight stack softly visible in the background.
 
-**Avoid also:** elbows drifting forward or flaring, torso rocking to push the weight, hunched shoulders.
+**Avoid also:** standing cable-station setup, elbows lifting off the pad, torso rocking to push the weight, hunched shoulders, forceful lockout.
 
 ---
 

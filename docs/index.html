@@ -124,6 +124,26 @@
   .log input::placeholder { color: #6b717d; }
   .log input:focus { outline: none; border-color: var(--accent); }
 
+  /* "Last time you did this" hint, read from workout history */
+  .last-hint { color: var(--muted); font-size: 0.78rem; margin: 8px 0 0; min-height: 1em; }
+  .last-hint b { color: var(--text); font-weight: 600; }
+
+  /* Per-exercise progression chart toggle + panel */
+  .prog-toggle {
+    display: inline-block; margin: 8px 0 0; padding: 0;
+    background: none; border: none; cursor: pointer;
+    color: var(--accent); font-size: 0.78rem; font-weight: 600;
+    touch-action: manipulation;
+  }
+  .prog-panel { margin-top: 10px; }
+  .prog-panel svg { width: 100%; height: auto; display: block; }
+  .prog-empty { color: var(--muted); font-size: 0.78rem; margin: 8px 0 0; }
+  /* Chart marks: recessive grid/axis, thin accent line, visible dots */
+  .prog-grid { stroke: var(--line); stroke-width: 1; }
+  .prog-line { fill: none; stroke: var(--accent); stroke-width: 2; }
+  .prog-dot  { fill: var(--accent); stroke: var(--card); stroke-width: 2; }
+  .prog-axis { fill: var(--muted); font-size: 10px; }
+
   /* Two CSV buttons share the top row; Reset gets its own full-width row.
      Grid keeps this stable at every phone width — no overflow, no clipping. */
   .footer {
@@ -162,6 +182,7 @@
 <div id="list"></div>
 
 <div class="footer">
+  <button class="act" id="finishBtn" style="grid-column: 1 / -1; background: var(--accent); color: #0b1f14; border-color: var(--accent);">✓ Finish workout &amp; save to history</button>
   <button class="act" id="exportBtn">⬇ Export CSV</button>
   <button class="act" id="importBtn">⬆ Import CSV</button>
   <button class="reset" id="resetBtn">Reset</button>
@@ -177,54 +198,54 @@ const DAYS = {
     title: "Day 1 — Full-Body",
     sub: "Machine-focused · 2–3 reps in reserve · knee-conscious",
     ex: [
-      { n: "1",  name: "Neutral-Grip Lat Pulldown Machine", scheme: "3 × 8–12 · 90s rest", sets: 3, cue: "Pull toward the upper chest. Keep ribs controlled, avoid excessive backward lean, don't pull behind the neck.", img: "images/d1/01-lat-pulldown.jpg" },
-      { n: "2",  name: "Machine Chest Press", scheme: "3 × 8–10 · 90s rest", sets: 3, cue: "Handles near mid-chest. Shoulder blades gently set; stop before form changes.", img: "images/d1/02-chest-press.jpg" },
-      { n: "3",  name: "Hip Thrust / Glute Bridge Machine", scheme: "3 × 8–12 · 90–120s rest", sets: 3, cue: "Drive through the feet, finish with the glutes. Avoid excessive lower-back arching.", img: "images/d1/03-hip-thrust.jpg" },
-      { n: "4",  name: "Lying Leg Curl", scheme: "3 × 10–12 · 75–90s rest", sets: 3, cue: "Align knee with the machine pivot. Curl smoothly without lifting hips from the pad.", img: "images/d1/04-lying-leg-curl.jpg" },
-      { n: "5",  name: "Reverse Pec Deck / Rear-Delt", scheme: "2 × 12–15 · 60–75s rest", sets: 2, cue: "Chest against the pad. Move upper arms back without shrugging or forcing range.", img: "images/d1/05-reverse-pec-deck.jpg" },
-      { n: "6",  name: "Seated Overhead Press", scheme: "2 × 8–10 · 90s rest", sets: 2, cue: "Comfortable grip and range. Back supported; avoid forcefully locking the elbows.", img: "images/d1/06-overhead-press.jpg" },
-      { n: "7",  name: "Seated Leg Extension", scheme: "2 × 12–15 · 60–75s rest", sets: 2, cue: "Light load, pain-free controlled range. No swinging, don't force full extension.", img: "images/d1/07-leg-extension.jpg" },
-      { n: "8",  name: "Hip Abductor Machine", scheme: "2 × 12–15 · 60s rest", sets: 2, cue: "Torso still, open the legs under control. Don't bounce at the end of range.", img: "images/d1/08-hip-abductor.jpg" },
-      { n: "9",  name: "Hip Adductor Machine", scheme: "1–2 × 12–15 · 60s rest", sets: 2, cue: "Moderate, comfortable start. Bring the legs together slowly.", img: "images/d1/09-hip-adductor.jpg" },
-      { n: "10A", name: "Machine Biceps Curl", scheme: "2 × 10–12 · alternating pair", sets: 2, cue: "Align elbows with pivot. Avoid shoulder movement and forceful lockout. Pair with 10B.", img: "images/d1/10a-biceps-curl.jpg" },
-      { n: "10B", name: "Triceps Extension / Pressdown", scheme: "2 × 10–12 · 60–75s after pair", sets: 2, cue: "Elbows controlled, shoulders relaxed. No torso momentum. Pair with 10A.", img: "images/d1/10b-triceps-extension.jpg" },
-      { n: "11", name: "Pallof Press / Dead Bug", scheme: "2–3 × 8–10 per side · 45–60s rest", sets: 3, cue: "Brace gently; keep pelvis and rib cage controlled. Stability over load or speed.", img: "images/d1/11-pallof-press.jpg" },
+      { n: "1",  name: "Neutral-Grip Lat Pulldown Machine", scheme: "3 × 8–12 · 90s rest", sets: 3, cue: "Pull toward the upper chest. Keep ribs controlled, avoid excessive backward lean, don't pull behind the neck.", img: "images/d1/01-lat-pulldown.jpg", tg: "https://www.technogym.com/en-US/product/selection-700-lat-machine_MNLC.html" },
+      { n: "2",  name: "Machine Chest Press", scheme: "3 × 8–10 · 90s rest", sets: 3, cue: "Handles near mid-chest. Shoulder blades gently set; stop before form changes.", img: "images/d1/02-chest-press.jpg", tg: "https://www.technogym.com/en-US/product/selection-700-chest-press_MNFC.html" },
+      { n: "3",  name: "Hip Thrust / Glute Bridge Machine", scheme: "3 × 8–12 · 90–120s rest", sets: 3, cue: "Drive through the feet, finish with the glutes. Avoid excessive lower-back arching.", img: "images/d1/03-hip-thrust.jpg", tg: "https://www.technogym.com/en-US/product/selection-900-hip-thrust_MN2P.html" },
+      { n: "4",  name: "Lying Leg Curl", scheme: "3 × 10–12 · 75–90s rest", sets: 3, cue: "Align knee with the machine pivot. Curl smoothly without lifting hips from the pad.", img: "images/d1/04-lying-leg-curl.jpg", tg: "https://www.technogym.com/en-US/product/selection-900-prone-leg-curl_MNUP.html" },
+      { n: "5",  name: "Reverse Pec Deck / Rear-Delt", scheme: "2 × 12–15 · 60–75s rest", sets: 2, cue: "Chest against the pad. Move upper arms back without shrugging or forcing range.", img: "images/d1/05-reverse-pec-deck.jpg", tg: "https://www.technogym.com/en-US/product/selection-700-dual-pectoral-reverse-fly_MNNC.html" },
+      { n: "6",  name: "Seated Overhead Press", scheme: "2 × 8–10 · 90s rest", sets: 2, cue: "Comfortable grip and range. Back supported; avoid forcefully locking the elbows.", img: "images/d1/06-overhead-press.jpg", tg: "https://www.technogym.com/en-US/product/selection-700-shoulder-press_MNEC.html" },
+      { n: "7",  name: "Seated Leg Extension", scheme: "2 × 12–15 · 60–75s rest", sets: 2, cue: "Light load, pain-free controlled range. No swinging, don't force full extension.", img: "images/d1/07-leg-extension.jpg", tg: "https://www.technogym.com/en-US/product/selection-700-leg-extension_MNJC.html" },
+      { n: "8",  name: "Hip Abductor Machine", scheme: "2 × 12–15 · 60s rest", sets: 2, cue: "Torso still, open the legs under control. Don't bounce at the end of range.", img: "images/d1/08-hip-abductor.jpg", tg: "https://www.technogym.com/en-INT/product/selection-900-abductor_MNPP.html" },
+      { n: "9",  name: "Hip Adductor Machine", scheme: "1–2 × 12–15 · 60s rest", sets: 2, cue: "Moderate, comfortable start. Bring the legs together slowly.", img: "images/d1/09-hip-adductor.jpg", tg: "https://www.technogym.com/en-US/product/selection-900-adductor_MNQP.html" },
+      { n: "10A", name: "Machine Biceps Curl", scheme: "2 × 10–12 · alternating pair", sets: 2, cue: "Align elbows with pivot. Avoid shoulder movement and forceful lockout. Pair with 10B.", img: "images/d1/10a-biceps-curl.jpg", tg: "https://www.technogym.com/en-US/product/selection-900-arm-curl_MNRP.html" },
+      { n: "10B", name: "Triceps Extension / Pressdown", scheme: "2 × 10–12 · 60–75s after pair", sets: 2, cue: "Elbows controlled, shoulders relaxed. No torso momentum. Pair with 10A.", img: "images/d1/10b-triceps-extension.jpg", tg: "https://www.technogym.com/en-US/product/selection-900-arm-extension_MNSP.html" },
+      { n: "11", name: "Pallof Press / Dead Bug", scheme: "2–3 × 8–10 per side · 45–60s rest", sets: 3, cue: "Brace gently; keep pelvis and rib cage controlled. Stability over load or speed.", img: "images/d1/11-pallof-press.jpg", tg: "https://www.technogym.com/en-US/product/dual-adjustable-pulley-performance_MB43.html" },
     ],
   },
   2: {
     title: "Day 2 — Push/Pull + Posterior",
     sub: "Back/posture emphasis · pull-biased · knee-conscious",
     ex: [
-      { n: "1",  name: "Chest-Supported Row Machine", scheme: "3 × 8–12 · 90s rest", sets: 3, cue: "Keep the chest on the pad. Pull the elbows back, pause briefly, and avoid shrugging.", img: "images/d2/01-chest-supported-row.jpg" },
-      { n: "2",  name: "Incline Machine Chest Press", scheme: "3 × 8–10 · 90s rest", sets: 3, cue: "Handles around upper-chest level. Keep shoulder blades stable; stop before form changes.", img: "images/d2/02-incline-chest-press.jpg" },
-      { n: "3",  name: "Back Extension (Machine or 45°)", scheme: "3 × 10–12 · 75–90s rest", sets: 3, cue: "Small hip-driven arc. Finish tall without leaning backward or hyperextending.", img: "images/d2/03-back-extension.jpg" },
-      { n: "4",  name: "Seated Leg Curl", scheme: "3 × 10–12 · 75–90s rest", sets: 3, cue: "Align knees with the pivot. Curl smoothly and control the return without bouncing.", img: "images/d2/04-seated-leg-curl.jpg" },
-      { n: "5",  name: "Machine Pullover / Straight-Arm Pulldown", scheme: "2 × 10–12 · 60–75s rest", sets: 2, cue: "Keep ribs controlled. Move through the shoulders; don't turn it into a triceps press.", img: "images/d2/05-pullover.jpg" },
-      { n: "6",  name: "Machine Lateral Raise", scheme: "2 × 12–15 · 60s rest", sets: 2, cue: "Raise only to a comfortable height. Keep shoulders down and avoid swinging.", img: "images/d2/06-lateral-raise.jpg" },
-      { n: "7",  name: "Seated / Standing Calf Raise", scheme: "3 × 10–15 · 60–75s rest", sets: 3, cue: "Controlled stretch and rise. Keep pressure even across the forefoot.", img: "images/d2/07-calf-raise.jpg" },
-      { n: "8",  name: "Hip Abductor Machine", scheme: "2 × 12–15 · 60s rest", sets: 2, cue: "Torso supported, open the legs slowly. Don't bounce at the end of range.", img: "images/d2/08-hip-abductor.jpg" },
-      { n: "9",  name: "Cable Face Pull", scheme: "2 × 12–15 · 60–75s rest", sets: 2, cue: "Pull toward eye level with the elbows high enough to stay comfortable. Don't arch the back.", img: "images/d2/09-face-pull.jpg" },
-      { n: "10A", name: "Machine Hammer / Neutral-Grip Curl", scheme: "2 × 10–12 · alternating pair", sets: 2, cue: "Upper arms still, wrists neutral. Stop before the shoulders roll forward. Pair with 10B.", img: "images/d2/10a-hammer-curl.jpg" },
-      { n: "10B", name: "Rope Triceps Pressdown", scheme: "2 × 10–12 · 60–75s after pair", sets: 2, cue: "Keep elbows close and shoulders relaxed. No torso momentum. Pair with 10A.", img: "images/d2/10b-rope-pressdown.jpg" },
-      { n: "11", name: "Side Plank / Bird Dog", scheme: "2–3 sets per side · 45–60s rest", sets: 3, cue: "Brace gently and keep the trunk long. Choose the version that stays pain-free.", img: "images/d2/11-side-plank.jpg" },
+      { n: "1",  name: "Chest-Supported Row Machine", scheme: "3 × 8–12 · 90s rest", sets: 3, cue: "Keep the chest on the pad. Pull the elbows back, pause briefly, and avoid shrugging.", img: "images/d2/01-chest-supported-row.jpg", tg: "https://www.technogym.com/en-INT/product/selection-700-low-row_MNHC.html" },
+      { n: "2",  name: "Incline Machine Chest Press", scheme: "3 × 8–10 · 90s rest", sets: 3, cue: "Handles around upper-chest level. Keep shoulder blades stable; stop before form changes.", img: "images/d2/02-incline-chest-press.jpg", tg: "https://www.technogym.com/en-US/product/pure-incline-chest-press_MG1500-NBGJV0.html" },
+      { n: "3",  name: "Back Extension (Machine or 45°)", scheme: "3 × 10–12 · 75–90s rest", sets: 3, cue: "Small hip-driven arc. Finish tall without leaning backward or hyperextending.", img: "images/d2/03-back-extension.jpg", tg: "https://www.technogym.com/en-US/product/selection-700-lower-back_MNCC.html" },
+      { n: "4",  name: "Seated Leg Curl", scheme: "3 × 10–12 · 75–90s rest", sets: 3, cue: "Align knees with the pivot. Curl smoothly and control the return without bouncing.", img: "images/d2/04-seated-leg-curl.jpg", tg: "https://www.technogym.com/en-INT/product/selection-700-leg-curl_MNIC.html" },
+      { n: "5",  name: "Machine Pullover / Straight-Arm Pulldown", scheme: "2 × 10–12 · 60–75s rest", sets: 2, cue: "Keep ribs controlled. Move through the shoulders; don't turn it into a triceps press.", img: "images/d2/05-pullover.jpg", tg: "https://www.technogym.com/en-INT/product/pure-strength-pullover_MG9000-NBGJV0.html" },
+      { n: "6",  name: "Machine Lateral Raise", scheme: "2 × 12–15 · 60s rest", sets: 2, cue: "Raise only to a comfortable height. Keep shoulders down and avoid swinging.", img: "images/d2/06-lateral-raise.jpg", tg: "https://www.technogym.com/en-INT/product/selection-700-delts-machine_MNKC.html" },
+      { n: "7",  name: "Seated / Standing Calf Raise", scheme: "3 × 10–15 · 60–75s rest", sets: 3, cue: "Controlled stretch and rise. Keep pressure even across the forefoot.", img: "images/d2/07-calf-raise.jpg", tg: "https://www.technogym.com/en-US/product/selection-900-standing-calf_MN5P.html" },
+      { n: "8",  name: "Hip Abductor Machine", scheme: "2 × 12–15 · 60s rest", sets: 2, cue: "Torso supported, open the legs slowly. Don't bounce at the end of range.", img: "images/d2/08-hip-abductor.jpg", tg: "https://www.technogym.com/en-INT/product/selection-900-abductor_MNPP.html" },
+      { n: "9",  name: "Cable Face Pull", scheme: "2 × 12–15 · 60–75s rest", sets: 2, cue: "Pull toward eye level with the elbows high enough to stay comfortable. Don't arch the back.", img: "images/d2/09-face-pull.jpg", tg: "https://www.technogym.com/en-US/product/dual-adjustable-pulley-performance_MB43.html" },
+      { n: "10A", name: "Machine Hammer / Neutral-Grip Curl", scheme: "2 × 10–12 · alternating pair", sets: 2, cue: "Upper arms still, wrists neutral. Stop before the shoulders roll forward. Pair with 10B.", img: "images/d2/10a-hammer-curl.jpg", tg: "https://www.technogym.com/en-US/product/selection-900-arm-curl_MNRP.html" },
+      { n: "10B", name: "Rope Triceps Pressdown", scheme: "2 × 10–12 · 60–75s after pair", sets: 2, cue: "Keep elbows close and shoulders relaxed. No torso momentum. Pair with 10A.", img: "images/d2/10b-rope-pressdown.jpg", tg: "https://www.technogym.com/en-US/product/dual-adjustable-pulley-performance_MB43.html" },
+      { n: "11", name: "Side Plank / Bird Dog", scheme: "2–3 sets per side · 45–60s rest", sets: 3, cue: "Brace gently and keep the trunk long. Choose the version that stays pain-free.", img: "images/d2/11-side-plank.jpg", tg: "https://www.acefitness.org/resources/everyone/exercise-library/14/bird-dog/" },
     ],
   },
   3: {
     title: "Day 3 — Strength + Control",
     sub: "Balanced push/pull · glute & quad control · low impact",
     ex: [
-      { n: "1",  name: "High Row Machine", scheme: "3 × 8–12 · 90s rest", sets: 3, cue: "Keep the chest supported. Pull down and back without leaning or shrugging.", img: "images/d3/01-high-row.jpg" },
-      { n: "2",  name: "Seated Machine Shoulder Press", scheme: "3 × 8–10 · 90s rest", sets: 3, cue: "Comfortable grip and range. Back supported; avoid hard elbow lockout.", img: "images/d3/02-shoulder-press.jpg" },
-      { n: "3",  name: "Hip Thrust / Glute Bridge Machine", scheme: "3 × 10–12 · 90–120s rest", sets: 3, cue: "Drive through the feet, finish with the glutes. Keep ribs down, avoid excessive arching.", img: "images/d3/03-hip-thrust.jpg" },
-      { n: "4",  name: "Seated Leg Extension", scheme: "2 × 12–15 · 60–75s rest", sets: 2, cue: "Light load, pain-free range. Move slowly; don't kick or force lockout.", img: "images/d3/04-leg-extension.jpg" },
-      { n: "5",  name: "Pec Deck / Cable Chest Fly", scheme: "2 × 10–12 · 60–75s rest", sets: 2, cue: "Comfortable shoulder range. Bring the arms together without rounding forward.", img: "images/d3/05-pec-deck.jpg" },
-      { n: "6",  name: "Neutral-Grip Seated Cable Row", scheme: "2 × 10–12 · 75–90s rest", sets: 2, cue: "Stay tall and pull toward the lower ribs. Avoid rocking backward.", img: "images/d3/06-cable-row.jpg" },
-      { n: "7",  name: "Seated Calf Raise", scheme: "3 × 12–15 · 60–75s rest", sets: 3, cue: "Pause briefly at the top and lower under control. Avoid bouncing.", img: "images/d3/07-seated-calf-raise.jpg" },
-      { n: "8",  name: "Supported Cable Hip Extension", scheme: "2 × 12–15 per side · 60s rest", sets: 2, cue: "Hold a stable support. Move from the hip without twisting the pelvis or arching.", img: "images/d3/08-cable-hip-extension.jpg" },
-      { n: "9",  name: "Hip Adductor Machine", scheme: "2 × 12–15 · 60s rest", sets: 2, cue: "Comfortable starting position. Bring the legs together slowly; don't force the stretch.", img: "images/d3/09-hip-adductor.jpg" },
-      { n: "10A", name: "Machine Biceps Curl", scheme: "2 × 10–12 · alternating pair", sets: 2, cue: "Align elbows with the pivot and keep the shoulders still. Pair with 10B.", img: "images/d3/10a-biceps-curl.jpg" },
-      { n: "10B", name: "Triceps Extension / Pressdown", scheme: "2 × 10–12 · 60–75s after pair", sets: 2, cue: "Elbows controlled, shoulders relaxed, torso still. Pair with 10A.", img: "images/d3/10b-triceps-extension.jpg" },
-      { n: "11", name: "Dead Bug", scheme: "2–3 × 6–10 per side · 45–60s rest", sets: 3, cue: "Keep the lower back gently supported and move the opposite arm and leg slowly.", img: "images/d3/11-dead-bug.jpg" },
+      { n: "1",  name: "High Row Machine", scheme: "3 × 8–12 · 90s rest", sets: 3, cue: "Keep the chest supported. Pull down and back without leaning or shrugging.", img: "images/d3/01-high-row.jpg", tg: "https://www.technogym.com/en-US/product/selection-900-vertical-traction_MNGP.html" },
+      { n: "2",  name: "Seated Machine Shoulder Press", scheme: "3 × 8–10 · 90s rest", sets: 3, cue: "Comfortable grip and range. Back supported; avoid hard elbow lockout.", img: "images/d3/02-shoulder-press.jpg", tg: "https://www.technogym.com/en-INT/product/selection-700-shoulder-press_MNEC.html" },
+      { n: "3",  name: "Hip Thrust / Glute Bridge Machine", scheme: "3 × 10–12 · 90–120s rest", sets: 3, cue: "Drive through the feet, finish with the glutes. Keep ribs down, avoid excessive arching.", img: "images/d3/03-hip-thrust.jpg", tg: "https://www.technogym.com/en-US/product/selection-900-hip-thrust_MN2P.html" },
+      { n: "4",  name: "Seated Leg Extension", scheme: "2 × 12–15 · 60–75s rest", sets: 2, cue: "Light load, pain-free range. Move slowly; don't kick or force lockout.", img: "images/d3/04-leg-extension.jpg", tg: "https://www.technogym.com/en-US/product/selection-700-leg-extension_MNJC.html" },
+      { n: "5",  name: "Pec Deck / Cable Chest Fly", scheme: "2 × 10–12 · 60–75s rest", sets: 2, cue: "Comfortable shoulder range. Bring the arms together without rounding forward.", img: "images/d3/05-pec-deck.jpg", tg: "https://www.technogym.com/en-US/product/selection-900-pectoral_MNTP.html" },
+      { n: "6",  name: "Neutral-Grip Seated Cable Row", scheme: "2 × 10–12 · 75–90s rest", sets: 2, cue: "Stay tall and pull toward the lower ribs. Avoid rocking backward.", img: "images/d3/06-cable-row.jpg", tg: "https://www.technogym.com/en-US/product/selection-900-low-row_MNHP.html" },
+      { n: "7",  name: "Seated Calf Raise", scheme: "3 × 12–15 · 60–75s rest", sets: 3, cue: "Pause briefly at the top and lower under control. Avoid bouncing.", img: "images/d3/07-seated-calf-raise.jpg", tg: "https://www.technogym.com/en-US/product/pure-seated-calf_MG4600-NBGJV0.html" },
+      { n: "8",  name: "Supported Cable Hip Extension", scheme: "2 × 12–15 per side · 60s rest", sets: 2, cue: "Hold a stable support. Move from the hip without twisting the pelvis or arching.", img: "images/d3/08-cable-hip-extension.jpg", tg: "https://www.technogym.com/en-US/product/dual-adjustable-pulley-performance_MB43.html" },
+      { n: "9",  name: "Hip Adductor Machine", scheme: "2 × 12–15 · 60s rest", sets: 2, cue: "Comfortable starting position. Bring the legs together slowly; don't force the stretch.", img: "images/d3/09-hip-adductor.jpg", tg: "https://www.technogym.com/en-US/product/selection-900-adductor_MNQP.html" },
+      { n: "10A", name: "Machine Biceps Curl", scheme: "2 × 10–12 · alternating pair", sets: 2, cue: "Align elbows with the pivot and keep the shoulders still. Pair with 10B.", img: "images/d3/10a-biceps-curl.jpg", tg: "https://www.technogym.com/en-US/product/selection-900-arm-curl_MNRP.html" },
+      { n: "10B", name: "Triceps Extension / Pressdown", scheme: "2 × 10–12 · 60–75s after pair", sets: 2, cue: "Elbows controlled, shoulders relaxed, torso still. Pair with 10A.", img: "images/d3/10b-triceps-extension.jpg", tg: "https://www.technogym.com/en-US/product/selection-900-arm-extension_MNSP.html" },
+      { n: "11", name: "Dead Bug", scheme: "2–3 × 6–10 per side · 45–60s rest", sets: 3, cue: "Keep the lower back gently supported and move the opposite arm and leg slowly.", img: "images/d3/11-dead-bug.jpg", tg: "https://www.acefitness.org/resources/everyone/exercise-library/147/supine-dead-bug/" },
     ],
   },
 };
@@ -246,6 +267,36 @@ function load() {
 }
 function save() { localStorage.setItem(storeKey(currentDay), JSON.stringify(state)); }
 
+// ---- Workout history (progression) ----
+// Per day, an array of finished sessions:
+//   [{ date: "2026-07-31", entries: { "1": {w:"40", r:"10"}, ... } }, ...]
+// Keyed by exercise NUMBER (ex.n), not array index, so it survives reordering
+// or edits to a day's `ex` list. Separate localStorage key from live state.
+const historyKey = (day) => `gym-day${day}-history-v1`;
+
+function loadHistory(day = currentDay) {
+  try {
+    const h = JSON.parse(localStorage.getItem(historyKey(day)));
+    return Array.isArray(h) ? h : [];
+  } catch { return []; }
+}
+function saveHistory(hist, day = currentDay) {
+  localStorage.setItem(historyKey(day), JSON.stringify(hist));
+}
+let history = loadHistory();
+
+// Sessions in which a given exercise (by number) has a logged weight, oldest first.
+function historyFor(exNum) {
+  return history
+    .filter((s) => s.entries[exNum] && s.entries[exNum].w !== "")
+    .map((s) => ({ date: s.date, w: s.entries[exNum].w, r: s.entries[exNum].r }));
+}
+// The most recent logged session for an exercise, or null.
+function lastFor(exNum) {
+  const h = historyFor(exNum);
+  return h.length ? h[h.length - 1] : null;
+}
+
 // Switch the visible day: persist choice, reload that day's exercises + progress.
 function selectDay(day) {
   currentDay = day;
@@ -253,6 +304,7 @@ function selectDay(day) {
   EXERCISES = DAYS[day].ex;
   totalSets = EXERCISES.reduce((s, e) => s + e.sets, 0);
   state = load();
+  history = loadHistory();
   document.getElementById("dayTitle").textContent = DAYS[day].title;
   document.getElementById("daySub").textContent = DAYS[day].sub;
   document.querySelectorAll(".tab").forEach((t) =>
@@ -267,11 +319,11 @@ document.getElementById("tabs").addEventListener("click", (e) => {
 
 const list = document.getElementById("list");
 
-// Build a "find this machine on Technogym" link. Technogym's own on-site search
-// URL isn't stable and the site blocks direct linking guesses, so we route
-// through a Google site-search scoped to their German catalogue — always resolves
-// and lands on the relevant current product. We clean the exercise name into a
-// good query (drop "/ alternatives", parenthetical notes, and generic words).
+// Link to the machine on Technogym. Prefer an exact product URL (`ex.tg`) when
+// the exercise has one; otherwise fall back to a Google site-search. The direct
+// URLs are verified en-US product pages — Technogym blocks bots and occasionally
+// restructures URLs, so if one 404s, remove its `tg:` field to revert that
+// exercise to the always-resolving search link below.
 function technogymQuery(name) {
   let q = name
     .split("/")[0]                       // keep the primary machine, drop alternates
@@ -286,9 +338,72 @@ function technogymQuery(name) {
   }
   return q;
 }
-function technogymLink(name) {
+function technogymSearchLink(name) {
   const q = `${technogymQuery(name)} site:technogym.com/de-DE`;
   return "https://www.google.com/search?q=" + encodeURIComponent(q);
+}
+// Returns { href, label } for the reference link on a card. Prefers an exact
+// URL (`ex.tg`); the label depends on where it points — most are Technogym
+// product pages, but bodyweight moves link to an exercise how-to elsewhere
+// (e.g. ACE Fitness). Falls back to a Technogym Google search when no URL.
+function technogymLink(ex) {
+  if (!ex.tg) return { href: technogymSearchLink(ex.name), label: "Find this machine on Technogym ↗" };
+  const isTechnogym = /(^|\.)technogym\.com$/i.test(new URL(ex.tg).hostname);
+  return {
+    href: ex.tg,
+    label: isTechnogym ? "View this machine on Technogym ↗" : "See how to do this exercise ↗",
+  };
+}
+
+// Build an inline-SVG line chart of top-set weight over time for one exercise.
+// Single series → no legend (the card title names it); recessive grid; thin
+// accent line with visible dots. Numeric weights only; entries that don't parse
+// as numbers are skipped (can't plot "bodyweight").
+function progressChartSVG(exNum) {
+  const pts = historyFor(exNum)
+    .map((s) => ({ date: s.date, y: parseFloat(s.w) }))
+    .filter((p) => !isNaN(p.y));
+
+  if (pts.length === 0) return `<p class="prog-empty">No numeric weight logged yet.</p>`;
+  if (pts.length === 1) {
+    const p = pts[0];
+    return `<p class="prog-empty">Only one session so far: <b>${p.y}kg</b> on ${p.date}. Finish another to see a trend.</p>`;
+  }
+
+  // viewBox coords; CSS scales width to the card. Padding leaves room for labels.
+  const W = 320, H = 160, padL = 34, padR = 10, padT = 12, padB = 24;
+  const plotW = W - padL - padR, plotH = H - padT - padB;
+
+  const ys = pts.map((p) => p.y);
+  let min = Math.min(...ys), max = Math.max(...ys);
+  if (min === max) { min -= 1; max += 1; } // flat line → give it a band
+  const x = (i) => padL + (pts.length === 1 ? plotW / 2 : (i / (pts.length - 1)) * plotW);
+  const y = (v) => padT + plotH - ((v - min) / (max - min)) * plotH;
+
+  // Horizontal grid + y labels at min / mid / max.
+  const gridVals = [min, (min + max) / 2, max];
+  const grid = gridVals.map((v) => {
+    const gy = y(v).toFixed(1);
+    return `<line class="prog-grid" x1="${padL}" y1="${gy}" x2="${W - padR}" y2="${gy}"/>` +
+           `<text class="prog-axis" x="${padL - 4}" y="${(+gy + 3).toFixed(1)}" text-anchor="end">${Math.round(v)}</text>`;
+  }).join("");
+
+  const line = pts.map((p, i) => `${x(i).toFixed(1)},${y(p.y).toFixed(1)}`).join(" ");
+  const dots = pts.map((p, i) =>
+    `<circle class="prog-dot" cx="${x(i).toFixed(1)}" cy="${y(p.y).toFixed(1)}" r="4">` +
+    `<title>${p.date}: ${p.y}kg${p.r ? " × " + p.r : ""}</title></circle>`).join("");
+
+  // Date labels: first and last only, to avoid crowding on narrow phones.
+  const short = (d) => d.slice(5); // MM-DD
+  const xLabels =
+    `<text class="prog-axis" x="${x(0).toFixed(1)}" y="${H - 6}" text-anchor="start">${short(pts[0].date)}</text>` +
+    `<text class="prog-axis" x="${x(pts.length - 1).toFixed(1)}" y="${H - 6}" text-anchor="end">${short(pts[pts.length - 1].date)}</text>`;
+
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Top-set weight over time">` +
+    grid +
+    `<polyline class="prog-line" points="${line}"/>` +
+    dots + xLabels +
+    `</svg>`;
 }
 
 function render() {
@@ -306,6 +421,11 @@ function render() {
     }).join("");
 
     const log = state.log[i] || {};
+    const tg = technogymLink(ex);
+    const last = lastFor(ex.n);
+    const lastHint = last
+      ? `Last time: <b>${last.w}${/\d$/.test(last.w) ? "kg" : ""}${last.r ? " × " + last.r : ""}</b> <span style="opacity:.7">(${last.date})</span>`
+      : "No history yet — finish a workout to start tracking.";
     card.innerHTML = `
       <div class="ex-img">
         <img src="${ex.img}" alt="${ex.name}" loading="lazy"
@@ -319,14 +439,17 @@ function render() {
       </div>
       <div class="ex-meta">${ex.scheme}</div>
       <div class="cue">${ex.cue}</div>
-      <a class="tg-link" href="${technogymLink(ex.name)}" target="_blank" rel="noopener noreferrer">
-        Find this machine on Technogym ↗
+      <a class="tg-link" href="${tg.href}" target="_blank" rel="noopener noreferrer">
+        ${tg.label}
       </a>
       <div class="sets">${setBtns}</div>
       <div class="log">
         <input type="text" inputmode="decimal" placeholder="Weight" data-log="w" data-ex="${i}" value="${log.w || ""}">
         <input type="text" inputmode="numeric" placeholder="Reps" data-log="r" data-ex="${i}" value="${log.r || ""}">
-      </div>`;
+      </div>
+      <p class="last-hint">${lastHint}</p>
+      <button class="prog-toggle" data-prog="${i}" aria-expanded="false">📈 Progress</button>
+      <div class="prog-panel" data-panel="${i}" hidden></div>`;
     list.appendChild(card);
   });
   updateProgress();
@@ -348,6 +471,22 @@ function updateProgress() {
 
 // Event delegation
 list.addEventListener("click", (e) => {
+  // Progress chart toggle — build the SVG lazily on first open.
+  const prog = e.target.closest(".prog-toggle");
+  if (prog) {
+    const i = prog.dataset.prog;
+    const panel = list.querySelector(`[data-panel="${i}"]`);
+    const open = panel.hidden;
+    if (open && !panel.dataset.built) {
+      panel.innerHTML = progressChartSVG(EXERCISES[i].n);
+      panel.dataset.built = "1";
+    }
+    panel.hidden = !open;
+    prog.setAttribute("aria-expanded", String(open));
+    prog.textContent = open ? "📉 Hide progress" : "📈 Progress";
+    return;
+  }
+
   const btn = e.target.closest(".set-btn");
   if (!btn) return;
   const key = `${btn.dataset.ex}-${btn.dataset.set}`;
@@ -373,6 +512,32 @@ document.getElementById("resetBtn").addEventListener("click", () => {
   }
 });
 
+// Finish workout: snapshot every exercise that has a logged weight into history,
+// then clear the live session so the next one starts fresh. Keyed by ex.n.
+document.getElementById("finishBtn").addEventListener("click", () => {
+  const entries = {};
+  EXERCISES.forEach((ex, i) => {
+    const log = state.log[i] || {};
+    if ((log.w || "").trim() !== "") entries[ex.n] = { w: log.w.trim(), r: (log.r || "").trim() };
+  });
+  const count = Object.keys(entries).length;
+  if (count === 0) {
+    alert("Log a weight on at least one exercise before finishing.");
+    return;
+  }
+  if (!confirm(`Save this workout (${count} exercise${count > 1 ? "s" : ""}) to history and start fresh?`)) return;
+
+  const today = new Date().toISOString().slice(0, 10);
+  history = loadHistory();
+  history.push({ date: today, entries });
+  saveHistory(history);
+
+  state = { sets: {}, log: {} };
+  save();
+  render();
+  alert("Saved to history 💪 Your next session starts fresh.");
+});
+
 // ---- CSV export / import ----
 // One row per exercise: number, name, sets done, weight, reps, date.
 function csvCell(v) {
@@ -387,7 +552,21 @@ document.getElementById("exportBtn").addEventListener("click", () => {
     const log = state.log[i] || {};
     return [ex.n, ex.name, countDone(i), ex.sets, log.w || "", log.r || "", today].map(csvCell).join(",");
   });
-  const csv = header.join(",") + "\n" + rows.join("\n");
+  // Second section: full workout history, one row per (session, exercise).
+  // Blank line + own header keeps it self-describing and re-importable.
+  const histHeader = ["history_date", "exercise_num", "weight", "reps"];
+  const histRows = [];
+  loadHistory().forEach((s) => {
+    Object.keys(s.entries).forEach((n) => {
+      const en = s.entries[n];
+      histRows.push([s.date, n, en.w || "", en.r || ""].map(csvCell).join(","));
+    });
+  });
+
+  let csv = header.join(",") + "\n" + rows.join("\n");
+  if (histRows.length) {
+    csv += "\n\n" + histHeader.join(",") + "\n" + histRows.join("\n");
+  }
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -418,17 +597,30 @@ document.getElementById("importFile").addEventListener("change", (e) => {
   reader.readAsText(file);
 });
 
-// Minimal CSV parser that handles quoted cells. Matches rows to exercises by
-// exercise_num, so it's robust to reordering.
+// Minimal CSV parser that handles quoted cells. The file may contain two
+// blank-line-separated sections: the live session, then (optionally) history.
+// We route each section by its header. Rows match exercises by exercise_num,
+// so it's robust to reordering.
 function applyCsv(text) {
-  const lines = text.replace(/\r/g, "").split("\n").filter((l) => l.trim() !== "");
-  const head = parseCsvLine(lines[0]);
-  const col = (name) => head.indexOf(name);
-  const iNum = col("exercise_num"), iDone = col("sets_done"),
-        iW = col("weight"), iR = col("reps");
+  // Split into sections on blank lines; each section is header + rows.
+  const sections = text.replace(/\r/g, "").split(/\n\s*\n/)
+    .map((s) => s.split("\n").filter((l) => l.trim() !== ""))
+    .filter((s) => s.length);
+
   const byNum = {};
   EXERCISES.forEach((ex, i) => (byNum[ex.n] = i));
 
+  sections.forEach((lines) => {
+    const head = parseCsvLine(lines[0]);
+    if (head.includes("sets_done")) applySessionSection(lines, head, byNum);
+    else if (head.includes("history_date")) applyHistorySection(lines, head);
+  });
+}
+
+function applySessionSection(lines, head, byNum) {
+  const col = (name) => head.indexOf(name);
+  const iNum = col("exercise_num"), iDone = col("sets_done"),
+        iW = col("weight"), iR = col("reps");
   const fresh = { sets: {}, log: {} };
   for (let r = 1; r < lines.length; r++) {
     const cells = parseCsvLine(lines[r]);
@@ -439,6 +631,21 @@ function applyCsv(text) {
     for (let s = 0; s < done; s++) fresh.sets[`${i}-${s}`] = true;
   }
   state = fresh;
+}
+
+function applyHistorySection(lines, head) {
+  const col = (name) => head.indexOf(name);
+  const iDate = col("history_date"), iNum = col("exercise_num"),
+        iW = col("weight"), iR = col("reps");
+  const byDate = {}; // regroup flat rows back into per-session objects
+  for (let r = 1; r < lines.length; r++) {
+    const cells = parseCsvLine(lines[r]);
+    const date = cells[iDate];
+    if (!date) continue;
+    (byDate[date] = byDate[date] || {})[cells[iNum]] = { w: cells[iW] || "", r: cells[iR] || "" };
+  }
+  history = Object.keys(byDate).sort().map((date) => ({ date, entries: byDate[date] }));
+  saveHistory(history);
 }
 
 function parseCsvLine(line) {
