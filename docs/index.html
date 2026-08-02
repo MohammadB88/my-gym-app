@@ -465,7 +465,7 @@ function render() {
       <div class="sets">${doneBtn}</div>
       <div class="log">
         <input type="text" inputmode="decimal" placeholder="Weight" data-log="w" data-ex="${i}" value="${log.w || ""}">
-        <input type="text" inputmode="numeric" placeholder="Reps" data-log="r" data-ex="${i}" value="${log.r || ""}">
+        <input type="text" inputmode="numeric" placeholder="Reps" data-log="r" data-ex="${i}" value="${log.r ?? "10"}">
       </div>
       <p class="last-hint">${lastHint}</p>
       <button class="prog-toggle" data-prog="${i}" aria-expanded="false">📈 Progress</button>
@@ -550,7 +550,7 @@ document.getElementById("finishBtn").addEventListener("click", () => {
   const entries = {};
   EXERCISES.forEach((ex, i) => {
     const log = state.log[i] || {};
-    if ((log.w || "").trim() !== "") entries[ex.n] = { w: log.w.trim(), r: (log.r || "").trim() };
+    if ((log.w || "").trim() !== "") entries[ex.n] = { w: log.w.trim(), r: (log.r ?? "10").toString().trim() || "10" };
   });
   const count = Object.keys(entries).length;
   if (count === 0) {
