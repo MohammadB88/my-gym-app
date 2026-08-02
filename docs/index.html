@@ -107,9 +107,9 @@
 
   .sets { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
   .set-btn {
-    width: 46px; height: 46px; border-radius: 10px;
+    min-width: 120px; height: 46px; padding: 0 16px; border-radius: 10px;
     border: 1px solid var(--line); background: var(--card2);
-    color: var(--muted); font-size: 1rem; font-weight: 600;
+    color: var(--muted); font-size: 0.95rem; font-weight: 600;
     cursor: pointer; transition: all .12s ease; touch-action: manipulation;
   }
   .set-btn.on {
@@ -258,9 +258,9 @@ let currentDay = +(localStorage.getItem("gym-current-day")) || 1;
 let EXERCISES = DAYS[currentDay].ex;
 
 const storeKey = (day) => `gym-day${day}-v1`;
-let totalSets = EXERCISES.reduce((s, e) => s + e.sets, 0);
 
-// state: { sets: { "0-1": true }, log: { "0": {w:"", r:""} } } — per day
+// state: { sets: { "0": true }, log: { "0": {w:"", r:""} } } — per day;
+// sets[i] is whether exercise i is marked done (not per-set anymore).
 let state = load();
 
 function load() {
@@ -305,7 +305,6 @@ function selectDay(day) {
   currentDay = day;
   localStorage.setItem("gym-current-day", day);
   EXERCISES = DAYS[day].ex;
-  totalSets = EXERCISES.reduce((s, e) => s + e.sets, 0);
   state = load();
   history = loadHistory();
   document.getElementById("dayTitle").textContent = DAYS[day].title;
@@ -432,16 +431,12 @@ function progressChartSVG(exNum) {
 function render() {
   list.innerHTML = "";
   EXERCISES.forEach((ex, i) => {
-    const doneSets = countDone(i);
-    const complete = doneSets === ex.sets;
+    const complete = isDone(i);
 
     const card = document.createElement("div");
     card.className = "exercise" + (complete ? " done" : "");
 
-    const setBtns = Array.from({ length: ex.sets }, (_, s) => {
-      const on = state.sets[`${i}-${s}`];
-      return `<button class="set-btn ${on ? "on" : ""}" data-ex="${i}" data-set="${s}">${s + 1}</button>`;
-    }).join("");
+    const doneBtn = `<button class="set-btn ${complete ? "on" : ""}" data-ex="${i}">${complete ? "✓ Done" : "Mark done"}</button>`;
 
     const log = state.log[i] || {};
     const tg = technogymLink(ex);
@@ -467,7 +462,7 @@ function render() {
         <a class="tg-link" href="${tg.href}" target="_blank" rel="noopener noreferrer">${tg.label}</a>
         ${howto ? `<a class="tg-link" href="${howto.href}" target="_blank" rel="noopener noreferrer">${howto.label}</a>` : ""}
       </div>
-      <div class="sets">${setBtns}</div>
+      <div class="sets">${doneBtn}</div>
       <div class="log">
         <input type="text" inputmode="decimal" placeholder="Weight" data-log="w" data-ex="${i}" value="${log.w || ""}">
         <input type="text" inputmode="numeric" placeholder="Reps" data-log="r" data-ex="${i}" value="${log.r || ""}">
@@ -480,18 +475,23 @@ function render() {
   updateProgress();
 }
 
+function isDone(i) {
+  return !!state.sets[i];
+}
+
+// Kept as an alias so CSV export (which reports sets_done/total_sets) still
+// makes sense: an exercise is fully done (all its sets) or not done at all.
 function countDone(i) {
-  let c = 0;
-  for (let s = 0; s < EXERCISES[i].sets; s++) if (state.sets[`${i}-${s}`]) c++;
-  return c;
+  return isDone(i) ? EXERCISES[i].sets : 0;
 }
 
 function updateProgress() {
-  const done = Object.values(state.sets).filter(Boolean).length;
-  const pct = Math.round((done / totalSets) * 100);
+  const done = EXERCISES.filter((_, i) => isDone(i)).length;
+  const total = EXERCISES.length;
+  const pct = Math.round((done / total) * 100);
   document.getElementById("barFill").style.width = pct + "%";
   document.getElementById("progressLabel").textContent =
-    `${done} of ${totalSets} sets done${done === totalSets ? " — session complete 💪" : ""}`;
+    `${done} of ${total} exercises done${done === total ? " — session complete 💪" : ""}`;
 }
 
 // Event delegation
@@ -514,8 +514,8 @@ list.addEventListener("click", (e) => {
 
   const btn = e.target.closest(".set-btn");
   if (!btn) return;
-  const key = `${btn.dataset.ex}-${btn.dataset.set}`;
-  state.sets[key] = !state.sets[key];
+  const i = btn.dataset.ex;
+  state.sets[i] = !state.sets[i];
   save();
   render();
 });
@@ -537,6 +537,13 @@ document.getElementById("resetBtn").addEventListener("click", () => {
   }
 });
 
+// YYYY-MM-DD in the user's local timezone (toISOString would give the UTC date,
+// which is off by one shortly after midnight east of Greenwich).
+function localISODate() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 // Finish workout: snapshot every exercise that has a logged weight into history,
 // then clear the live session so the next one starts fresh. Keyed by ex.n.
 document.getElementById("finishBtn").addEventListener("click", () => {
@@ -552,7 +559,7 @@ document.getElementById("finishBtn").addEventListener("click", () => {
   }
   if (!confirm(`Save this workout (${count} exercise${count > 1 ? "s" : ""}) to history and start fresh?`)) return;
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = localISODate();
   history = loadHistory();
   history.push({ date: today, entries });
   saveHistory(history);
@@ -571,7 +578,7 @@ function csvCell(v) {
 }
 
 document.getElementById("exportBtn").addEventListener("click", () => {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = localISODate();
   const header = ["exercise_num", "exercise_name", "sets_done", "total_sets", "weight", "reps", "date"];
   const rows = EXERCISES.map((ex, i) => {
     const log = state.log[i] || {};
@@ -652,8 +659,8 @@ function applySessionSection(lines, head, byNum) {
     const i = byNum[cells[iNum]];
     if (i === undefined) continue;
     fresh.log[i] = { w: cells[iW] || "", r: cells[iR] || "" };
-    const done = Math.min(parseInt(cells[iDone], 10) || 0, EXERCISES[i].sets);
-    for (let s = 0; s < done; s++) fresh.sets[`${i}-${s}`] = true;
+    const done = parseInt(cells[iDone], 10) || 0;
+    if (done >= EXERCISES[i].sets) fresh.sets[i] = true;
   }
   state = fresh;
 }
