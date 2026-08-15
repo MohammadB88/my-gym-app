@@ -192,70 +192,86 @@
   <input type="file" id="importFile" accept=".csv" hidden>
 </div>
 
+<script src="exercises.js"></script>
 <script>
-// All three training days from the plan. `img` points to a file in the images/
-// folder — drop a matching image there and it appears automatically; until then
-// a placeholder is shown. To edit a workout, edit the `ex` array for that day.
+// All three training days from the plan. Each `ex` entry references an
+// exercise in the EXERCISES registry (exercises.js) by `id` — the shared
+// name/scheme/cue/tg/howto live there, so the same movement can appear in
+// multiple days without duplicating its data. `n` is this day's display
+// number (position), and `sets` is this day's set count for that exercise —
+// both stay per-day since the same exercise can be programmed differently
+// across days. `img` also stays per-day: the same machine is often
+// photographed differently per day. To edit a workout, edit the `ex` array
+// for that day; to change an exercise's own details, edit it in exercises.js.
 const DAYS = {
   1: {
     title: "Day 1 — Full-Body",
     sub: "Machine-focused · 2–3 reps in reserve · knee-conscious",
     ex: [
-      { n: "1",  name: "Neutral-Grip Lat Pulldown Machine", scheme: "3 × 8–12 · 90s rest", sets: 3, cue: "Pull toward the upper chest. Keep ribs controlled, avoid excessive backward lean, don't pull behind the neck.", img: "images/d1/01-lat-pulldown.jpg", tg: "https://www.technogym.com/en-US/product/selection-700-lat-machine_MNLC.html", howto: "https://www.acefitness.org/resources/everyone/exercise-library/158/seated-lat-pulldown/" },
-      { n: "2",  name: "Machine Chest Press", scheme: "3 × 8–10 · 90s rest", sets: 3, cue: "Handles near mid-chest. Shoulder blades gently set; stop before form changes.", img: "images/d1/02-chest-press.jpg", tg: "https://www.technogym.com/en-US/product/selection-700-chest-press_MNFC.html", howto: "https://www.acefitness.org/resources/everyone/exercise-library/188/seated-chest-press/" },
-      { n: "3",  name: "Hip Thrust / Glute Bridge Machine", scheme: "3 × 8–12 · 90–120s rest", sets: 3, cue: "Drive through the feet, finish with the glutes. Avoid excessive lower-back arching.", img: "images/d1/03-hip-thrust.jpg", tg: "https://www.technogym.com/en-US/product/selection-900-hip-thrust_MN2P.html", howto: "https://www.acefitness.org/resources/everyone/exercise-library/49/glute-bridge/" },
-      { n: "4",  name: "Lying Leg Curl", scheme: "3 × 10–12 · 75–90s rest", sets: 3, cue: "Align knee with the machine pivot. Curl smoothly without lifting hips from the pad.", img: "images/d1/04-lying-leg-curl.jpg", tg: "https://www.technogym.com/en-US/product/selection-900-prone-leg-curl_MNUP.html", howto: "https://www.acefitness.org/resources/everyone/exercise-library/131/prone-lying-hamstrings-curl/" },
-      { n: "5",  name: "Reverse Pec Deck / Rear-Delt", scheme: "2 × 12–15 · 60–75s rest", sets: 2, cue: "Chest against the pad. Move upper arms back without shrugging or forcing range.", img: "images/d1/05-reverse-pec-deck.jpg", tg: "https://www.technogym.com/en-US/product/selection-700-dual-pectoral-reverse-fly_MNNC.html", howto: "https://www.acefitness.org/resources/everyone/exercise-library/353/reverse-fly/" },
-      { n: "6",  name: "Seated Overhead Press", scheme: "2 × 8–10 · 90s rest", sets: 2, cue: "Comfortable grip and range. Back supported; avoid forcefully locking the elbows.", img: "images/d1/06-overhead-press.jpg", tg: "https://www.technogym.com/en-US/product/selection-700-shoulder-press_MNEC.html", howto: "https://www.acefitness.org/resources/everyone/exercise-library/186/seated-shoulder-press/" },
-      { n: "7",  name: "Seated Leg Extension", scheme: "2 × 12–15 · 60–75s rest", sets: 2, cue: "Light load, pain-free controlled range. No swinging, don't force full extension.", img: "images/d1/07-leg-extension.jpg", tg: "https://www.technogym.com/en-US/product/selection-700-leg-extension_MNJC.html", howto: "https://www.acefitness.org/resources/everyone/exercise-library/183/seated-leg-extension/" },
-      { n: "8",  name: "Hip Abductor Machine", scheme: "2 × 12–15 · 60s rest", sets: 2, cue: "Torso still, open the legs under control. Don't bounce at the end of range.", img: "images/d1/08-hip-abductor.jpg", tg: "https://www.technogym.com/en-INT/product/selection-900-abductor_MNPP.html", howto: "https://www.acefitness.org/resources/everyone/exercise-library/38/side-lying-hip-abduction/" },
-      { n: "9",  name: "Hip Adductor Machine", scheme: "1–2 × 12–15 · 60s rest", sets: 2, cue: "Moderate, comfortable start. Bring the legs together slowly.", img: "images/d1/09-hip-adductor.jpg", tg: "https://www.technogym.com/en-US/product/selection-900-adductor_MNQP.html", howto: "https://www.acefitness.org/resources/everyone/exercise-library/39/side-lying-hip-adduction/" },
-      { n: "10A", name: "Machine Biceps Curl", scheme: "2 × 10–12 · alternating pair", sets: 2, cue: "Align elbows with pivot. Avoid shoulder movement and forceful lockout. Pair with 10B.", img: "images/d1/10a-biceps-curl.jpg", tg: "https://www.technogym.com/en-US/product/selection-900-arm-curl_MNRP.html", howto: "https://www.acefitness.org/resources/everyone/exercise-library/184/seated-biceps-curl/" },
-      { n: "10B", name: "Triceps Extension / Pressdown", scheme: "2 × 10–12 · 60–75s after pair", sets: 2, cue: "Elbows controlled, shoulders relaxed. No torso momentum. Pair with 10A.", img: "images/d1/10b-triceps-extension.jpg", tg: "https://www.technogym.com/en-US/product/selection-900-arm-extension_MNSP.html", howto: "https://www.acefitness.org/resources/everyone/exercise-library/185/triceps-pushdowns/" },
-      { n: "11", name: "Pallof Press / Dead Bug", scheme: "2–3 × 8–10 per side · 45–60s rest", sets: 3, cue: "Brace gently; keep pelvis and rib cage controlled. Stability over load or speed.", img: "images/d1/11-pallof-press.jpg", tg: "https://www.technogym.com/en-US/product/dual-adjustable-pulley-performance_MB43.html", howto: "https://www.acefitness.org/resources/everyone/exercise-library/332/standing-anti-rotation-press/" },
+      { n: "1",  id: "lat_pulldown",       sets: 3, img: "images/d1/01-lat-pulldown.jpg" },
+      { n: "2",  id: "chest_press",        sets: 3, img: "images/d1/02-chest-press.jpg" },
+      { n: "3",  id: "hip_thrust",         sets: 3, img: "images/d1/03-hip-thrust.jpg" },
+      { n: "4",  id: "lying_leg_curl",     sets: 3, img: "images/d1/04-lying-leg-curl.jpg" },
+      { n: "5",  id: "reverse_pec_deck",   sets: 2, img: "images/d1/05-reverse-pec-deck.jpg" },
+      { n: "6",  id: "overhead_press",     sets: 2, img: "images/d1/06-overhead-press.jpg" },
+      { n: "7",  id: "leg_extension",      sets: 2, img: "images/d1/07-leg-extension.jpg" },
+      { n: "8",  id: "hip_abductor",       sets: 2, img: "images/d1/08-hip-abductor.jpg" },
+      { n: "9",  id: "hip_adductor",       sets: 2, img: "images/d1/09-hip-adductor.jpg" },
+      { n: "10A", id: "biceps_curl",       sets: 2, img: "images/d1/10a-biceps-curl.jpg" },
+      { n: "10B", id: "triceps_extension", sets: 2, img: "images/d1/10b-triceps-extension.jpg" },
+      { n: "11", id: "pallof_press",       sets: 3, img: "images/d1/11-pallof-press.jpg" },
     ],
   },
   2: {
     title: "Day 2 — Push/Pull + Posterior",
     sub: "Back/posture emphasis · pull-biased · knee-conscious",
     ex: [
-      { n: "1",  name: "Chest-Supported Row Machine", scheme: "3 × 8–12 · 90s rest", sets: 3, cue: "Keep the chest on the pad. Pull the elbows back, pause briefly, and avoid shrugging.", img: "images/d2/01-chest-supported-row.jpg", tg: "https://www.technogym.com/en-INT/product/selection-700-low-row_MNHC.html", howto: "https://www.acefitness.org/resources/everyone/exercise-library/48/seated-row/" },
-      { n: "2",  name: "Incline Machine Chest Press", scheme: "3 × 8–10 · 90s rest", sets: 3, cue: "Handles around upper-chest level. Keep shoulder blades stable; stop before form changes.", img: "images/d2/02-incline-chest-press.jpg", tg: "https://www.technogym.com/en-US/product/pure-incline-chest-press_MG1500-NBGJV0.html", howto: "https://www.acefitness.org/resources/everyone/exercise-library/25/incline-chest-press/" },
-      { n: "3",  name: "Back Extension (Machine or 45°)", scheme: "3 × 10–12 · 75–90s rest", sets: 3, cue: "Small hip-driven arc. Finish tall without leaning backward or hyperextending.", img: "images/d2/03-back-extension.jpg", tg: "https://www.technogym.com/en-US/product/selection-700-lower-back_MNCC.html" },
-      { n: "4",  name: "Seated Leg Curl", scheme: "3 × 10–12 · 75–90s rest", sets: 3, cue: "Align knees with the pivot. Curl smoothly and control the return without bouncing.", img: "images/d2/04-seated-leg-curl.jpg", tg: "https://www.technogym.com/en-INT/product/selection-700-leg-curl_MNIC.html", howto: "https://www.acefitness.org/resources/everyone/exercise-library/153/lying-hamstrings-curl/" },
-      { n: "5",  name: "Machine Pullover / Straight-Arm Pulldown", scheme: "2 × 10–12 · 60–75s rest", sets: 2, cue: "Keep ribs controlled. Move through the shoulders; don't turn it into a triceps press.", img: "images/d2/05-pullover.jpg", tg: "https://www.technogym.com/en-INT/product/pure-strength-pullover_MG9000-NBGJV0.html", howto: "https://www.acefitness.org/resources/everyone/exercise-library/37/lying-pullovers/" },
-      { n: "6",  name: "Machine Lateral Raise", scheme: "2 × 12–15 · 60s rest", sets: 2, cue: "Raise only to a comfortable height. Keep shoulders down and avoid swinging.", img: "images/d2/06-lateral-raise.jpg", tg: "https://www.technogym.com/en-INT/product/selection-700-delts-machine_MNKC.html", howto: "https://www.acefitness.org/resources/everyone/exercise-library/26/lateral-raise/" },
-      { n: "7",  name: "Seated / Standing Calf Raise", scheme: "3 × 10–15 · 60–75s rest", sets: 3, cue: "Controlled stretch and rise. Keep pressure even across the forefoot.", img: "images/d2/07-calf-raise.jpg", tg: "https://www.technogym.com/en-US/product/selection-900-standing-calf_MN5P.html", howto: "https://www.acefitness.org/resources/everyone/exercise-library/51/calf-raises/" },
-      { n: "8",  name: "Hip Abductor Machine", scheme: "2 × 12–15 · 60s rest", sets: 2, cue: "Torso supported, open the legs slowly. Don't bounce at the end of range.", img: "images/d2/08-hip-abductor.jpg", tg: "https://www.technogym.com/en-INT/product/selection-900-abductor_MNPP.html", howto: "https://www.acefitness.org/resources/everyone/exercise-library/38/side-lying-hip-abduction/" },
-      { n: "9",  name: "Cable Face Pull", scheme: "2 × 12–15 · 60–75s rest", sets: 2, cue: "Pull toward eye level with the elbows high enough to stay comfortable. Don't arch the back.", img: "images/d2/09-face-pull.jpg", tg: "https://www.technogym.com/en-US/product/dual-adjustable-pulley-performance_MB43.html" },
-      { n: "10A", name: "Machine Hammer / Neutral-Grip Curl", scheme: "2 × 10–12 · alternating pair", sets: 2, cue: "Upper arms still, wrists neutral. Stop before the shoulders roll forward. Pair with 10B.", img: "images/d2/10a-hammer-curl.jpg", tg: "https://www.technogym.com/en-US/product/selection-900-arm-curl_MNRP.html", howto: "https://www.acefitness.org/resources/everyone/exercise-library/10/hammer-curl/" },
-      { n: "10B", name: "Rope Triceps Pressdown", scheme: "2 × 10–12 · 60–75s after pair", sets: 2, cue: "Keep elbows close and shoulders relaxed. No torso momentum. Pair with 10A.", img: "images/d2/10b-rope-pressdown.jpg", tg: "https://www.technogym.com/en-US/product/dual-adjustable-pulley-performance_MB43.html", howto: "https://www.acefitness.org/resources/everyone/exercise-library/185/triceps-pushdowns/" },
-      { n: "11", name: "Side Plank / Bird Dog", scheme: "2–3 sets per side · 45–60s rest", sets: 3, cue: "Brace gently and keep the trunk long. Choose the version that stays pain-free.", img: "images/d2/11-side-plank.jpg", tg: "https://www.acefitness.org/resources/everyone/exercise-library/14/bird-dog/" },
+      { n: "1",  id: "chest_supported_row", sets: 3, img: "images/d2/01-chest-supported-row.jpg" },
+      { n: "2",  id: "incline_chest_press", sets: 3, img: "images/d2/02-incline-chest-press.jpg" },
+      { n: "3",  id: "back_extension",      sets: 3, img: "images/d2/03-back-extension.jpg" },
+      { n: "4",  id: "seated_leg_curl",     sets: 3, img: "images/d2/04-seated-leg-curl.jpg" },
+      { n: "5",  id: "pullover",            sets: 2, img: "images/d2/05-pullover.jpg" },
+      { n: "6",  id: "lateral_raise",       sets: 2, img: "images/d2/06-lateral-raise.jpg" },
+      { n: "7",  id: "calf_raise",          sets: 3, img: "images/d2/07-calf-raise.jpg" },
+      { n: "8",  id: "hip_abductor",        sets: 2, img: "images/d2/08-hip-abductor.jpg" },
+      { n: "9",  id: "face_pull",           sets: 2, img: "images/d2/09-face-pull.jpg" },
+      { n: "10A", id: "hammer_curl",        sets: 2, img: "images/d2/10a-hammer-curl.jpg" },
+      { n: "10B", id: "rope_pressdown",     sets: 2, img: "images/d2/10b-rope-pressdown.jpg" },
+      { n: "11", id: "side_plank",          sets: 3, img: "images/d2/11-side-plank.jpg" },
     ],
   },
   3: {
     title: "Day 3 — Strength + Control",
     sub: "Balanced push/pull · glute & quad control · low impact",
     ex: [
-      { n: "1",  name: "High Row Machine", scheme: "3 × 8–12 · 90s rest", sets: 3, cue: "Keep the chest supported. Pull down and back without leaning or shrugging.", img: "images/d3/01-high-row.jpg", tg: "https://www.technogym.com/en-US/product/selection-900-vertical-traction_MNGP.html", howto: "https://www.acefitness.org/resources/everyone/exercise-library/336/high-row/" },
-      { n: "2",  name: "Seated Machine Shoulder Press", scheme: "3 × 8–10 · 90s rest", sets: 3, cue: "Comfortable grip and range. Back supported; avoid hard elbow lockout.", img: "images/d3/02-shoulder-press.jpg", tg: "https://www.technogym.com/en-INT/product/selection-700-shoulder-press_MNEC.html", howto: "https://www.acefitness.org/resources/everyone/exercise-library/186/seated-shoulder-press/" },
-      { n: "3",  name: "Hip Thrust / Glute Bridge Machine", scheme: "3 × 10–12 · 90–120s rest", sets: 3, cue: "Drive through the feet, finish with the glutes. Keep ribs down, avoid excessive arching.", img: "images/d3/03-hip-thrust.jpg", tg: "https://www.technogym.com/en-US/product/selection-900-hip-thrust_MN2P.html", howto: "https://www.acefitness.org/resources/everyone/exercise-library/49/glute-bridge/" },
-      { n: "4",  name: "Seated Leg Extension", scheme: "2 × 12–15 · 60–75s rest", sets: 2, cue: "Light load, pain-free range. Move slowly; don't kick or force lockout.", img: "images/d3/04-leg-extension.jpg", tg: "https://www.technogym.com/en-US/product/selection-700-leg-extension_MNJC.html", howto: "https://www.acefitness.org/resources/everyone/exercise-library/183/seated-leg-extension/" },
-      { n: "5",  name: "Pec Deck / Cable Chest Fly", scheme: "2 × 10–12 · 60–75s rest", sets: 2, cue: "Comfortable shoulder range. Bring the arms together without rounding forward.", img: "images/d3/05-pec-deck.jpg", tg: "https://www.technogym.com/en-US/product/selection-900-pectoral_MNTP.html", howto: "https://www.acefitness.org/resources/everyone/exercise-library/160/standing-chest-fly/" },
-      { n: "6",  name: "Neutral-Grip Seated Cable Row", scheme: "2 × 10–12 · 75–90s rest", sets: 2, cue: "Stay tall and pull toward the lower ribs. Avoid rocking backward.", img: "images/d3/06-cable-row.jpg", tg: "https://www.technogym.com/en-US/product/selection-900-low-row_MNHP.html", howto: "https://www.acefitness.org/resources/everyone/exercise-library/48/seated-row/" },
-      { n: "7",  name: "Seated Calf Raise", scheme: "3 × 12–15 · 60–75s rest", sets: 3, cue: "Pause briefly at the top and lower under control. Avoid bouncing.", img: "images/d3/07-seated-calf-raise.jpg", tg: "https://www.technogym.com/en-US/product/pure-seated-calf_MG4600-NBGJV0.html", howto: "https://www.acefitness.org/resources/everyone/exercise-library/51/calf-raises/" },
-      { n: "8",  name: "Supported Cable Hip Extension", scheme: "2 × 12–15 per side · 60s rest", sets: 2, cue: "Hold a stable support. Move from the hip without twisting the pelvis or arching.", img: "images/d3/08-cable-hip-extension.jpg", tg: "https://www.technogym.com/en-US/product/dual-adjustable-pulley-performance_MB43.html" },
-      { n: "9",  name: "Hip Adductor Machine", scheme: "2 × 12–15 · 60s rest", sets: 2, cue: "Comfortable starting position. Bring the legs together slowly; don't force the stretch.", img: "images/d3/09-hip-adductor.jpg", tg: "https://www.technogym.com/en-US/product/selection-900-adductor_MNQP.html", howto: "https://www.acefitness.org/resources/everyone/exercise-library/39/side-lying-hip-adduction/" },
-      { n: "10A", name: "Machine Biceps Curl", scheme: "2 × 10–12 · alternating pair", sets: 2, cue: "Align elbows with the pivot and keep the shoulders still. Pair with 10B.", img: "images/d3/10a-biceps-curl.jpg", tg: "https://www.technogym.com/en-US/product/selection-900-arm-curl_MNRP.html", howto: "https://www.acefitness.org/resources/everyone/exercise-library/184/seated-biceps-curl/" },
-      { n: "10B", name: "Triceps Extension / Pressdown", scheme: "2 × 10–12 · 60–75s after pair", sets: 2, cue: "Elbows controlled, shoulders relaxed, torso still. Pair with 10A.", img: "images/d3/10b-triceps-extension.jpg", tg: "https://www.technogym.com/en-US/product/selection-900-arm-extension_MNSP.html", howto: "https://www.acefitness.org/resources/everyone/exercise-library/185/triceps-pushdowns/" },
-      { n: "11", name: "Dead Bug", scheme: "2–3 × 6–10 per side · 45–60s rest", sets: 3, cue: "Keep the lower back gently supported and move the opposite arm and leg slowly.", img: "images/d3/11-dead-bug.jpg", tg: "https://www.acefitness.org/resources/everyone/exercise-library/147/supine-dead-bug/" },
+      { n: "1",  id: "high_row",            sets: 3, img: "images/d3/01-high-row.jpg" },
+      { n: "2",  id: "shoulder_press",      sets: 3, img: "images/d3/02-shoulder-press.jpg" },
+      { n: "3",  id: "hip_thrust",          sets: 3, img: "images/d3/03-hip-thrust.jpg" },
+      { n: "4",  id: "leg_extension",       sets: 2, img: "images/d3/04-leg-extension.jpg" },
+      { n: "5",  id: "pec_deck",            sets: 2, img: "images/d3/05-pec-deck.jpg" },
+      { n: "6",  id: "cable_row",           sets: 2, img: "images/d3/06-cable-row.jpg" },
+      { n: "7",  id: "seated_calf_raise",   sets: 3, img: "images/d3/07-seated-calf-raise.jpg" },
+      { n: "8",  id: "cable_hip_extension", sets: 2, img: "images/d3/08-cable-hip-extension.jpg" },
+      { n: "9",  id: "hip_adductor",        sets: 2, img: "images/d3/09-hip-adductor.jpg" },
+      { n: "10A", id: "biceps_curl",        sets: 2, img: "images/d3/10a-biceps-curl.jpg" },
+      { n: "10B", id: "triceps_extension",  sets: 2, img: "images/d3/10b-triceps-extension.jpg" },
+      { n: "11", id: "dead_bug",            sets: 3, img: "images/d3/11-dead-bug.jpg" },
     ],
   },
 };
 
+// Merge a day's `ex` list (n/id/sets/img) with its EXERCISES registry entry
+// (name/scheme/cue/tg/howto) into the flat shape the rest of the app expects.
+function resolveDay(day) {
+  return day.ex.map((e) => Object.assign({}, EXERCISES[e.id], e));
+}
+
 // Which day is showing. Restored from localStorage so it reopens where you left off.
 let currentDay = +(localStorage.getItem("gym-current-day")) || 1;
-let EXERCISES = DAYS[currentDay].ex;
+// Resolved (registry-merged) exercise list for the current day — this is what
+// render() and friends iterate over. Not to be confused with the EXERCISES
+// registry in exercises.js, which is keyed by id.
+let dayExercises = resolveDay(DAYS[currentDay]);
 
 const storeKey = (day) => `gym-day${day}-v1`;
 
@@ -304,7 +320,7 @@ function lastFor(exNum) {
 function selectDay(day) {
   currentDay = day;
   localStorage.setItem("gym-current-day", day);
-  EXERCISES = DAYS[day].ex;
+  dayExercises = resolveDay(DAYS[day]);
   state = load();
   history = loadHistory();
   document.getElementById("dayTitle").textContent = DAYS[day].title;
@@ -430,7 +446,7 @@ function progressChartSVG(exNum) {
 
 function render() {
   list.innerHTML = "";
-  EXERCISES.forEach((ex, i) => {
+  dayExercises.forEach((ex, i) => {
     const complete = isDone(i);
 
     const card = document.createElement("div");
@@ -482,12 +498,12 @@ function isDone(i) {
 // Kept as an alias so CSV export (which reports sets_done/total_sets) still
 // makes sense: an exercise is fully done (all its sets) or not done at all.
 function countDone(i) {
-  return isDone(i) ? EXERCISES[i].sets : 0;
+  return isDone(i) ? dayExercises[i].sets : 0;
 }
 
 function updateProgress() {
-  const done = EXERCISES.filter((_, i) => isDone(i)).length;
-  const total = EXERCISES.length;
+  const done = dayExercises.filter((_, i) => isDone(i)).length;
+  const total = dayExercises.length;
   const pct = Math.round((done / total) * 100);
   document.getElementById("barFill").style.width = pct + "%";
   document.getElementById("progressLabel").textContent =
@@ -503,7 +519,7 @@ list.addEventListener("click", (e) => {
     const panel = list.querySelector(`[data-panel="${i}"]`);
     const open = panel.hidden;
     if (open && !panel.dataset.built) {
-      panel.innerHTML = progressChartSVG(EXERCISES[i].n);
+      panel.innerHTML = progressChartSVG(dayExercises[i].n);
       panel.dataset.built = "1";
     }
     panel.hidden = !open;
@@ -548,7 +564,7 @@ function localISODate() {
 // then clear the live session so the next one starts fresh. Keyed by ex.n.
 document.getElementById("finishBtn").addEventListener("click", () => {
   const entries = {};
-  EXERCISES.forEach((ex, i) => {
+  dayExercises.forEach((ex, i) => {
     const log = state.log[i] || {};
     if ((log.w || "").trim() !== "") entries[ex.n] = { w: log.w.trim(), r: (log.r ?? "10").toString().trim() || "10" };
   });
@@ -580,7 +596,7 @@ function csvCell(v) {
 document.getElementById("exportBtn").addEventListener("click", () => {
   const today = localISODate();
   const header = ["exercise_num", "exercise_name", "sets_done", "total_sets", "weight", "reps", "date"];
-  const rows = EXERCISES.map((ex, i) => {
+  const rows = dayExercises.map((ex, i) => {
     const log = state.log[i] || {};
     return [ex.n, ex.name, countDone(i), ex.sets, log.w || "", log.r || "", today].map(csvCell).join(",");
   });
@@ -640,7 +656,7 @@ function applyCsv(text) {
     .filter((s) => s.length);
 
   const byNum = {};
-  EXERCISES.forEach((ex, i) => (byNum[ex.n] = i));
+  dayExercises.forEach((ex, i) => (byNum[ex.n] = i));
 
   sections.forEach((lines) => {
     const head = parseCsvLine(lines[0]);
@@ -660,7 +676,7 @@ function applySessionSection(lines, head, byNum) {
     if (i === undefined) continue;
     fresh.log[i] = { w: cells[iW] || "", r: cells[iR] || "" };
     const done = parseInt(cells[iDone], 10) || 0;
-    if (done >= EXERCISES[i].sets) fresh.sets[i] = true;
+    if (done >= dayExercises[i].sets) fresh.sets[i] = true;
   }
   state = fresh;
 }
