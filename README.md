@@ -1,7 +1,7 @@
-# My Gym App — Day 1 Tracker
+# My Gym App — 3-Day Tracker
 
-A simple, single-file web app to track the **Day 1** workout from my personalized
-3-day training plan. No build step, no server, no dependencies — just open it.
+A simple web app to track my personalized **3-day** training plan (Day 1/2/3,
+switchable via a tab bar). No build step, no server, no dependencies — just open it.
 
 **▶ Live app: https://mohammadb88.github.io/my-gym-app/**
 
@@ -11,16 +11,21 @@ Open the [live app](https://mohammadb88.github.io/my-gym-app/), or run it locall
 opening [`docs/index.html`](docs/index.html) in any browser (double-click, or serve
 it). Works on phone and desktop.
 
-- **Tap the numbered buttons** to check off each set as you complete it.
+- **Day 1 / Day 2 / Day 3 tabs** switch between workouts; your choice is remembered.
+- **Mark done** on each exercise as you complete it.
 - **Log weight and reps** per exercise.
-- **Progress bar** at the top tracks completed sets across the session.
-- **⬇ Export CSV** — download your session as a dated CSV (opens in Excel/Sheets).
+- **Progress bar** at the top tracks completed exercises across the session.
+- **✓ Finish workout** — snapshots your logged sets into that day's history and
+  starts a fresh session. Each exercise then shows a "Last time" hint and a
+  **📈 Progress** chart of weight over time.
+- **⬇ Export CSV** — download your session + history as a dated CSV (opens in
+  Excel/Sheets).
 - **⬆ Import CSV** — load a previous export back in (e.g. on another device).
-- **Reset** — clear the session.
+- **Reset** — clear the current session (history is kept).
 
-Progress auto-saves in the browser (`localStorage`), so you can close the tab
-mid-workout and come back. Note: it saves **per device/browser** — use Export/Import
-to move data between devices.
+Progress and history auto-save in the browser (`localStorage`), per day, so you
+can close the tab mid-workout and come back. Note: it saves **per device/browser**
+— use Export/Import to move data between devices.
 
 ## Exercise images
 
@@ -44,7 +49,8 @@ when you're ready to publish.
 
 | Path | Purpose |
 |------|---------|
-| `docs/index.html` | The whole app (HTML + CSS + JS inline) — served by Pages |
+| `docs/index.html` | The app shell — HTML + CSS + JS inline — served by Pages |
+| `docs/exercises.js` | Shared exercise data (name, cue, reference links), keyed by id |
 | `docs/images/` | Exercise images (+ naming guide) |
 | `docs/404.html`, `docs/.nojekyll` | Pages helpers |
 | `Personalized_3_Day_Gym_Training_Plan.md` | The full training plan this is based on |
