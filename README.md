@@ -1,7 +1,8 @@
-# My Gym App — 3-Day Tracker
+# My Gym App — Training Tracker
 
-A simple web app to track my personalized **3-day** training plan (Day 1/2/3,
-switchable via a tab bar). No build step, no server, no dependencies — just open it.
+A simple web app to track my personalized training plan: 3 full-body gym days
+plus 2 bodyweight core sessions (Day 1/2/3, Core A/B, switchable via a tab
+bar). No build step, no server, no dependencies — just open it.
 
 **▶ Live app: https://mohammadb88.github.io/my-gym-app/**
 
@@ -11,7 +12,8 @@ Open the [live app](https://mohammadb88.github.io/my-gym-app/), or run it locall
 opening [`docs/index.html`](docs/index.html) in any browser (double-click, or serve
 it). Works on phone and desktop.
 
-- **Day 1 / Day 2 / Day 3 tabs** switch between workouts; your choice is remembered.
+- **Day 1 / Day 2 / Day 3 / Core A / Core B tabs** switch between workouts; your
+  choice is remembered.
 - **Mark done** on each exercise as you complete it.
 - **Log weight and reps** per exercise.
 - **Progress bar** at the top tracks completed exercises across the session.

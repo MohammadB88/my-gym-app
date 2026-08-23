@@ -1,5 +1,5 @@
-Exercise images — 3-day plan
-============================
+Exercise images — training plan
+================================
 
 Drop an image into the matching day folder using the exact path below and it
 will appear automatically in the app (no code changes needed). Until a file
@@ -51,6 +51,20 @@ DAY 3  (d3/)
   d3/10a-biceps-curl.jpg        Machine Biceps Curl
   d3/10b-triceps-extension.jpg  Triceps Extension / Pressdown
   d3/11-dead-bug.jpg            Dead Bug
+
+CORE A — Stability  (core-a/)
+  core-a/01-dead-bug.jpg        Dead Bug
+  core-a/02-bird-dog.jpg        Bird Dog
+  core-a/03-side-plank.jpg      Side Plank
+  core-a/04-glute-bridge.jpg    Glute Bridge
+  core-a/05-front-plank.jpg     Front Plank
+
+CORE B — Oblique Emphasis  (core-b/)
+  core-b/01-dead-bug.jpg            Dead Bug
+  core-b/02-side-plank.jpg          Side Plank
+  core-b/03-bird-dog.jpg            Bird Dog
+  core-b/04-slow-russian-twist.jpg  Slow Russian Twist
+  core-b/05-glute-bridge.jpg        Glute Bridge
 
 If you'd rather use PNG (or another extension), update the matching `img:`
 path in index.html.

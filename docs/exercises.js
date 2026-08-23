@@ -213,6 +213,33 @@ const EXERCISES = {
     cue: "Keep the lower back gently supported and move the opposite arm and leg slowly.",
     tg: "https://www.acefitness.org/resources/everyone/exercise-library/147/supine-dead-bug/",
   },
+  bird_dog: {
+    name: "Bird Dog",
+    scheme: "6–12 reps per side · ~5–10s hold each rep · 30–45s rest",
+    cue: "Pause at full extension, keep hips square. One of McGill's 'Big Three' spine-stability moves.",
+    tg: "https://www.acefitness.org/resources/everyone/exercise-library/14/bird-dog/",
+  },
+  side_plank_core: {
+    name: "Side Plank",
+    scheme: "~15–30s per side to start, building up · 30–45s rest",
+    cue: "Stack hips, straight line head-to-feet. One of McGill's 'Big Three' spine-stability moves.",
+  },
+  glute_bridge_core: {
+    name: "Glute Bridge",
+    scheme: "10–15 reps · ~3–5s hold at top · 30–45s rest",
+    cue: "Drive through heels, don't overarch the lower back.",
+    tg: "https://www.acefitness.org/resources/everyone/exercise-library/49/glute-bridge/",
+  },
+  front_plank: {
+    name: "Front Plank",
+    scheme: "~20–30s per round, building to 60s · 30–45s rest",
+    cue: "Neutral spine, brace core, keep hips level.",
+  },
+  slow_russian_twist: {
+    name: "Slow Russian Twist",
+    scheme: "~10–12 slow reps per side · ~2s per rotation · 30–45s rest",
+    cue: "Rotate from the ribcage, not the arms. Feet can stay grounded.",
+  },
 };
 
 // Exercises defined above but not currently scheduled in any day. Kept here

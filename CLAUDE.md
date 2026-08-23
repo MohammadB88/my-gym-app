@@ -4,10 +4,11 @@ Guidance for Claude Code working in this repo.
 
 ## What this is
 
-A single-file web app to track a personalized **3-day** training plan (Day 1/2/3,
-switchable via a tab bar). No build step, no server, no dependencies, no
-framework — plain HTML + CSS + inline JS. To run it, open
-[`docs/index.html`](docs/index.html) in a browser.
+A single-file web app to track a personalized training plan: 3 full-body gym
+days plus 2 bodyweight core sessions (Day 1/2/3, Core A/B, switchable via a
+tab bar). No build step, no server, no dependencies, no framework — plain
+HTML + CSS + inline JS. To run it, open [`docs/index.html`](docs/index.html)
+in a browser.
 
 ## Layout
 
@@ -20,17 +21,19 @@ The web app lives in `docs/` (GitHub Pages serves this folder — see README).
 | [`docs/404.html`](docs/404.html) | Redirects unknown paths to the app root (for GitHub Pages) |
 | [`docs/.nojekyll`](docs/.nojekyll) | Tells Pages to skip Jekyll processing |
 | [`Personalized_3_Day_Gym_Training_Plan.md`](Personalized_3_Day_Gym_Training_Plan.md) | The source training plan the app is based on |
+| [`core-training-sessions.md`](core-training-sessions.md) | The source core-session plan (Core A/B) the app is based on |
 
 ## How it works
 
-- All three workouts live in a `const DAYS = {1,2,3}` object near the top of the
-  `<script>`. Each day has `title`, `sub`, and an `ex` array; each exercise has
+- All five sessions live in a `const DAYS = {1,2,3,4,5}` object near the top of
+  the `<script>` — days 1–3 are the gym days, 4–5 are the Core A/B bodyweight
+  sessions. Each entry has `title`, `sub`, and an `ex` array; each exercise has
   `n` (label), `name`, `scheme`, `sets` (count), `cue`, `img` path, and optional
   `tg` / `howto` reference URLs (see links below).
   **To change a workout, edit that day's `ex` array** — the UI renders from it.
-- A Day 1/2/3 tab bar switches `currentDay`; `selectDay()` reloads that day's
-  exercises + progress + history. The chosen day persists in `localStorage`
-  (`gym-current-day`).
+- A 5-tab bar (Day 1/2/3, Core A/B) switches `currentDay`; `selectDay()`
+  reloads that day's exercises + progress + history. The chosen day persists
+  in `localStorage` (`gym-current-day`).
 - Live session state (`{ sets: {...}, log: {...} }`) persists **per day** under
   `gym-day<N>-v1`. Bump the key if you change the state shape.
 - **Workout history** (progression) persists per day under `gym-day<N>-history-v1`
