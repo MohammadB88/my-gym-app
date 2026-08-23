@@ -14,6 +14,7 @@ const EXERCISES = {
     cue: "Pull toward the upper chest. Keep ribs controlled, avoid excessive backward lean, don't pull behind the neck.",
     tg: "https://www.technogym.com/en-US/product/selection-700-lat-machine_MNLC.html",
     howto: "https://www.acefitness.org/resources/everyone/exercise-library/158/seated-lat-pulldown/",
+    defaultWeight: "35",
   },
   chest_press: {
     name: "Machine Chest Press",
@@ -21,6 +22,7 @@ const EXERCISES = {
     cue: "Handles near mid-chest. Shoulder blades gently set; stop before form changes.",
     tg: "https://www.technogym.com/en-US/product/selection-700-chest-press_MNFC.html",
     howto: "https://www.acefitness.org/resources/everyone/exercise-library/188/seated-chest-press/",
+    defaultWeight: "25",
   },
   hip_thrust: {
     name: "Hip Thrust / Glute Bridge Machine",
@@ -35,6 +37,7 @@ const EXERCISES = {
     cue: "Align knee with the machine pivot. Curl smoothly without lifting hips from the pad.",
     tg: "https://www.technogym.com/en-US/product/selection-900-prone-leg-curl_MNUP.html",
     howto: "https://www.acefitness.org/resources/everyone/exercise-library/131/prone-lying-hamstrings-curl/",
+    defaultWeight: "25",
   },
   reverse_pec_deck: {
     name: "Reverse Pec Deck / Rear-Delt",
@@ -42,6 +45,7 @@ const EXERCISES = {
     cue: "Chest against the pad. Move upper arms back without shrugging or forcing range.",
     tg: "https://www.technogym.com/en-US/product/selection-700-dual-pectoral-reverse-fly_MNNC.html",
     howto: "https://www.acefitness.org/resources/everyone/exercise-library/353/reverse-fly/",
+    defaultWeight: "30",
   },
   overhead_press: {
     name: "Seated Overhead Press",
@@ -49,6 +53,7 @@ const EXERCISES = {
     cue: "Comfortable grip and range. Back supported; avoid forcefully locking the elbows.",
     tg: "https://www.technogym.com/en-US/product/selection-700-shoulder-press_MNEC.html",
     howto: "https://www.acefitness.org/resources/everyone/exercise-library/186/seated-shoulder-press/",
+    defaultWeight: "15",
   },
   leg_extension: {
     name: "Seated Leg Extension",
@@ -56,6 +61,7 @@ const EXERCISES = {
     cue: "Light load, pain-free controlled range. No swinging, don't force full extension.",
     tg: "https://www.technogym.com/en-US/product/selection-700-leg-extension_MNJC.html",
     howto: "https://www.acefitness.org/resources/everyone/exercise-library/183/seated-leg-extension/",
+    defaultWeight: "32.5",
   },
   hip_abductor: {
     name: "Hip Abductor Machine",
@@ -63,6 +69,7 @@ const EXERCISES = {
     cue: "Torso still, open the legs under control. Don't bounce at the end of range.",
     tg: "https://www.technogym.com/en-INT/product/selection-900-abductor_MNPP.html",
     howto: "https://www.acefitness.org/resources/everyone/exercise-library/38/side-lying-hip-abduction/",
+    defaultWeight: "55",
   },
   hip_adductor: {
     name: "Hip Adductor Machine",
@@ -70,6 +77,7 @@ const EXERCISES = {
     cue: "Moderate, comfortable start. Bring the legs together slowly.",
     tg: "https://www.technogym.com/en-US/product/selection-900-adductor_MNQP.html",
     howto: "https://www.acefitness.org/resources/everyone/exercise-library/39/side-lying-hip-adduction/",
+    defaultWeight: "50",
   },
   biceps_curl: {
     name: "Machine Biceps Curl",
@@ -77,6 +85,7 @@ const EXERCISES = {
     cue: "Align elbows with pivot. Avoid shoulder movement and forceful lockout. Pair with 10B.",
     tg: "https://www.technogym.com/en-US/product/selection-900-arm-curl_MNRP.html",
     howto: "https://www.acefitness.org/resources/everyone/exercise-library/184/seated-biceps-curl/",
+    defaultWeight: "25",
   },
   triceps_extension: {
     name: "Triceps Extension / Pressdown",
@@ -84,6 +93,7 @@ const EXERCISES = {
     cue: "Elbows controlled, shoulders relaxed. No torso momentum. Pair with 10A.",
     tg: "https://www.technogym.com/en-US/product/selection-900-arm-extension_MNSP.html",
     howto: "https://www.acefitness.org/resources/everyone/exercise-library/185/triceps-pushdowns/",
+    defaultWeight: "40",
   },
   pallof_press: {
     name: "Pallof Press / Dead Bug",
@@ -98,6 +108,7 @@ const EXERCISES = {
     cue: "Keep the chest on the pad. Pull the elbows back, pause briefly, and avoid shrugging.",
     tg: "https://www.technogym.com/en-INT/product/selection-700-low-row_MNHC.html",
     howto: "https://www.acefitness.org/resources/everyone/exercise-library/48/seated-row/",
+    defaultWeight: "30",
   },
   incline_chest_press: {
     name: "Incline Machine Chest Press",
@@ -179,6 +190,7 @@ const EXERCISES = {
     cue: "Comfortable grip and range. Back supported; avoid hard elbow lockout.",
     tg: "https://www.technogym.com/en-INT/product/selection-700-shoulder-press_MNEC.html",
     howto: "https://www.acefitness.org/resources/everyone/exercise-library/186/seated-shoulder-press/",
+    defaultWeight: "15",
   },
   pec_deck: {
     name: "Pec Deck / Cable Chest Fly",
@@ -186,6 +198,7 @@ const EXERCISES = {
     cue: "Comfortable shoulder range. Bring the arms together without rounding forward.",
     tg: "https://www.technogym.com/en-US/product/selection-900-pectoral_MNTP.html",
     howto: "https://www.acefitness.org/resources/everyone/exercise-library/160/standing-chest-fly/",
+    defaultWeight: "32.5",
   },
   cable_row: {
     name: "Neutral-Grip Seated Cable Row",

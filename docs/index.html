@@ -478,6 +478,7 @@ function render() {
 
     const doneBtn = `<button class="set-btn ${complete ? "on" : ""}" data-ex="${i}">${complete ? "✓ Done" : "Mark done"}</button>`;
 
+    if (!state.log[i] && ex.defaultWeight) state.log[i] = { w: ex.defaultWeight };
     const log = state.log[i] || {};
     const tg = technogymLink(ex);
     const howto = howtoLink(ex);
