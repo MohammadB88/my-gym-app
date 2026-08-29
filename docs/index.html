@@ -355,22 +355,26 @@ const DAYS = {
     title: "Core A — Stability",
     sub: "2–3 rounds · 30–45s rest between exercises",
     ex: [
-      { n: "1", id: "dead_bug",             sets: 3, img: "images/core-a/01-dead-bug.jpg" },
-      { n: "2", id: "bird_dog",             sets: 3, img: "images/core-a/02-bird-dog.jpg" },
-      { n: "3", id: "side_plank_core",      sets: 3, img: "images/core-a/03-side-plank.jpg" },
-      { n: "4", id: "glute_bridge_core",    sets: 3, img: "images/core-a/04-glute-bridge.jpg" },
-      { n: "5", id: "front_plank",          sets: 3, img: "images/core-a/05-front-plank.jpg" },
+      { n: "1", id: "cat_camel",            sets: 1, img: "images/core-a/00-cat-camel.jpg" },
+      { n: "2", id: "dead_bug",             sets: 3, img: "images/core-a/01-dead-bug.jpg" },
+      { n: "3", id: "bird_dog",             sets: 3, img: "images/core-a/02-bird-dog.jpg" },
+      { n: "4", id: "side_plank_core",      sets: 3, img: "images/core-a/03-side-plank.jpg" },
+      { n: "5", id: "glute_bridge_core",    sets: 3, img: "images/core-a/04-glute-bridge.jpg" },
+      { n: "6", id: "front_plank",          sets: 3, img: "images/core-a/05-front-plank.jpg" },
+      { n: "7", id: "prone_back_extension", sets: 3, img: "images/core-a/06-prone-back-extension.jpg" },
     ],
   },
   5: {
     title: "Core B — Oblique Emphasis",
     sub: "2–3 rounds · 30–45s rest between exercises",
     ex: [
-      { n: "1", id: "dead_bug",             sets: 3, img: "images/core-b/01-dead-bug.jpg" },
-      { n: "2", id: "side_plank_core",      sets: 3, img: "images/core-b/02-side-plank.jpg" },
-      { n: "3", id: "bird_dog",             sets: 3, img: "images/core-b/03-bird-dog.jpg" },
-      { n: "4", id: "slow_russian_twist",   sets: 3, img: "images/core-b/04-slow-russian-twist.jpg" },
-      { n: "5", id: "glute_bridge_core",    sets: 3, img: "images/core-b/05-glute-bridge.jpg" },
+      { n: "1", id: "cat_camel",            sets: 1, img: "images/core-b/00-cat-camel.jpg" },
+      { n: "2", id: "dead_bug",             sets: 3, img: "images/core-b/01-dead-bug.jpg" },
+      { n: "3", id: "side_plank_core",      sets: 3, img: "images/core-b/02-side-plank.jpg" },
+      { n: "4", id: "bird_dog",             sets: 3, img: "images/core-b/03-bird-dog.jpg" },
+      { n: "5", id: "slow_russian_twist",   sets: 3, img: "images/core-b/04-slow-russian-twist.jpg" },
+      { n: "6", id: "glute_bridge_core",    sets: 3, img: "images/core-b/05-glute-bridge.jpg" },
+      { n: "7", id: "prone_back_extension", sets: 3, img: "images/core-b/06-prone-back-extension.jpg" },
     ],
   },
 };
@@ -606,10 +610,10 @@ async function replaceHistory(day, hist) {
 
 let history = [];
 
-// Sessions in which a given exercise (by number) has a logged weight, oldest first.
+// Sessions in which a given exercise (by number) has a logged weight or reps, oldest first.
 function historyFor(exNum) {
   return history
-    .filter((s) => s.entries[exNum] && s.entries[exNum].w !== "")
+    .filter((s) => s.entries[exNum] && (s.entries[exNum].w || s.entries[exNum].r))
     .map((s) => ({ date: s.date, w: s.entries[exNum].w, r: s.entries[exNum].r }));
 }
 // The most recent logged session for an exercise, or null.
@@ -706,19 +710,21 @@ function howtoLink(ex) {
            label: "▶ Watch form videos ↗" };
 }
 
-// Build an inline-SVG line chart of top-set weight over time for one exercise.
-// Single series → no legend (the card title names it); recessive grid; thin
-// accent line with visible dots. Numeric weights only; entries that don't parse
-// as numbers are skipped (can't plot "bodyweight").
-function progressChartSVG(exNum) {
-  const pts = historyFor(exNum)
-    .map((s) => ({ date: s.date, y: parseFloat(s.w) }))
+// Build an inline-SVG line chart of progress over time for one exercise:
+// top-set weight for weighted exercises, reps for bodyweight ones. Single
+// series → no legend (the card title names it); recessive grid; thin accent
+// line with visible dots. Entries that don't parse as numbers are skipped.
+function progressChartSVG(ex) {
+  const unit = ex.bodyweight ? "" : "kg";
+  const field = ex.bodyweight ? "r" : "w";
+  const pts = historyFor(ex.n)
+    .map((s) => ({ date: s.date, y: parseFloat(s[field]) }))
     .filter((p) => !isNaN(p.y));
 
-  if (pts.length === 0) return `<p class="prog-empty">No numeric weight logged yet.</p>`;
+  if (pts.length === 0) return `<p class="prog-empty">No numeric ${ex.bodyweight ? "reps" : "weight"} logged yet.</p>`;
   if (pts.length === 1) {
     const p = pts[0];
-    return `<p class="prog-empty">Only one session so far: <b>${p.y}kg</b> on ${p.date}. Finish another to see a trend.</p>`;
+    return `<p class="prog-empty">Only one session so far: <b>${p.y}${unit}</b> on ${p.date}. Finish another to see a trend.</p>`;
   }
 
   // viewBox coords; CSS scales width to the card. Padding leaves room for labels.
@@ -742,7 +748,7 @@ function progressChartSVG(exNum) {
   const line = pts.map((p, i) => `${x(i).toFixed(1)},${y(p.y).toFixed(1)}`).join(" ");
   const dots = pts.map((p, i) =>
     `<circle class="prog-dot" cx="${x(i).toFixed(1)}" cy="${y(p.y).toFixed(1)}" r="4">` +
-    `<title>${p.date}: ${p.y}kg${p.r ? " × " + p.r : ""}</title></circle>`).join("");
+    `<title>${p.date}: ${p.y}${unit}${ex.bodyweight ? " reps" : ""}</title></circle>`).join("");
 
   // Date labels: first and last only, to avoid crowding on narrow phones.
   const short = (d) => d.slice(5); // MM-DD
@@ -750,7 +756,7 @@ function progressChartSVG(exNum) {
     `<text class="prog-axis" x="${x(0).toFixed(1)}" y="${H - 6}" text-anchor="start">${short(pts[0].date)}</text>` +
     `<text class="prog-axis" x="${x(pts.length - 1).toFixed(1)}" y="${H - 6}" text-anchor="end">${short(pts[pts.length - 1].date)}</text>`;
 
-  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Top-set weight over time">` +
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${ex.bodyweight ? "Reps" : "Top-set weight"} over time">` +
     grid +
     `<polyline class="prog-line" points="${line}"/>` +
     dots + xLabels +
@@ -773,7 +779,9 @@ function render() {
     const howto = howtoLink(ex);
     const last = lastFor(ex.n);
     const lastHint = last
-      ? `Last time: <b>${last.w}${/\d$/.test(last.w) ? "kg" : ""}${last.r ? " × " + last.r : ""}</b> <span style="opacity:.7">(${last.date})</span>`
+      ? ex.bodyweight
+        ? `Last time: <b>${last.r} reps</b> <span style="opacity:.7">(${last.date})</span>`
+        : `Last time: <b>${last.w}${/\d$/.test(last.w) ? "kg" : ""}${last.r ? " × " + last.r : ""}</b> <span style="opacity:.7">(${last.date})</span>`
       : "No history yet — finish a workout to start tracking.";
     card.innerHTML = `
       <div class="ex-img">
@@ -794,7 +802,7 @@ function render() {
       </div>
       <div class="sets">${doneBtn}</div>
       <div class="log">
-        <input type="text" inputmode="decimal" placeholder="Weight" data-log="w" data-ex="${i}" value="${log.w || ""}">
+        ${ex.bodyweight ? "" : `<input type="text" inputmode="decimal" placeholder="Weight" data-log="w" data-ex="${i}" value="${log.w || ""}">`}
         <input type="text" inputmode="numeric" placeholder="Reps" data-log="r" data-ex="${i}" value="${log.r ?? "10"}">
       </div>
       <p class="last-hint">${lastHint}</p>
@@ -833,7 +841,7 @@ list.addEventListener("click", (e) => {
     const panel = list.querySelector(`[data-panel="${i}"]`);
     const open = panel.hidden;
     if (open && !panel.dataset.built) {
-      panel.innerHTML = progressChartSVG(dayExercises[i].n);
+      panel.innerHTML = progressChartSVG(dayExercises[i]);
       panel.dataset.built = "1";
     }
     panel.hidden = !open;
@@ -874,17 +882,20 @@ function localISODate() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-// Finish workout: snapshot every exercise that has a logged weight into history,
-// then clear the live session so the next one starts fresh. Keyed by ex.n.
+// Finish workout: snapshot every exercise that has a logged weight (or, for
+// bodyweight exercises, logged reps) into history, then clear the live
+// session so the next one starts fresh. Keyed by ex.n.
 document.getElementById("finishBtn").addEventListener("click", async () => {
   const entries = {};
   dayExercises.forEach((ex, i) => {
     const log = state.log[i] || {};
-    if ((log.w || "").trim() !== "") entries[ex.n] = { w: log.w.trim(), r: (log.r ?? "10").toString().trim() || "10" };
+    const w = (log.w || "").trim();
+    const r = (log.r ?? "").toString().trim();
+    if (ex.bodyweight ? r !== "" : w !== "") entries[ex.n] = { w, r: r || "10" };
   });
   const count = Object.keys(entries).length;
   if (count === 0) {
-    alert("Log a weight on at least one exercise before finishing.");
+    alert("Log a weight or rep count on at least one exercise before finishing.");
     return;
   }
   if (!confirm(`Save this workout (${count} exercise${count > 1 ? "s" : ""}) to history and start fresh?`)) return;

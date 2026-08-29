@@ -4,11 +4,13 @@
 
 | Exercise | Reps / Hold (per round) | Cue |
 |---|---|---|
+| Cat-Camel | 5–8 slow reps | Slow flexion/extension through the full range; mobility warm-up, not a strength move |
 | Dead Bug | 8–12 reps per side, done under control | Press low back flat, exhale as you extend |
 | Bird Dog | 6–12 reps per side, each rep held ~5–10 seconds | Pause at full extension, keep hips square |
 | Side Plank | ~15–30 seconds per side to start, building up as strength improves | Stack hips, straight line head-to-feet |
 | Glute Bridge | 10–15 reps, pausing ~3–5 seconds at the top of each rep | Drive through heels, don't overarch lower back |
 | Front Plank | ~20–30 seconds per round at first, working toward 60 seconds | Neutral spine, brace core, hips level |
+| Prone Back Extension (floor) | 8–12 reps | Lift chest a few centimetres, chin tucked, glutes squeezed; short arc, no neck cranking |
 
 Bird Dog + Side Plank are two of Dr. Stuart McGill's "Big Three" spine-stability exercises — the anchor for this session's theme.
 
@@ -16,11 +18,13 @@ Bird Dog + Side Plank are two of Dr. Stuart McGill's "Big Three" spine-stability
 
 | Exercise | Reps / Hold (per round) | Cue |
 |---|---|---|
+| Cat-Camel | 5–8 slow reps | Slow flexion/extension through the full range; mobility warm-up, not a strength move |
 | Dead Bug | 8–12 reps per side, done under control | Press low back flat, exhale as you extend |
 | Side Plank | ~15–30 seconds per side to start, building up as strength improves | Stack hips, straight line head-to-feet |
 | Bird Dog | 6–12 reps per side, each rep held ~5–10 seconds | Pause at full extension, keep hips square |
 | Slow Russian Twist | ~10–12 slow reps per side, about two seconds per rotation | Rotate from ribcage not arms; feet can stay grounded |
 | Glute Bridge | 10–15 reps, pausing ~3–5 seconds at the top of each rep | Drive through heels, don't overarch lower back |
+| Prone Back Extension (floor) | 8–12 reps | Lift chest a few centimetres, chin tucked, glutes squeezed; short arc, no neck cranking |
 
 ## Session Structure (both sessions)
 
@@ -30,6 +34,8 @@ Bird Dog + Side Plank are two of Dr. Stuart McGill's "Big Three" spine-stability
 
 ## Sources
 
+- **Cat-Camel** — acefitness.org/resources/pros/expert-articles/7077/low-back-exercises-stuart-mcgill-s-big-three/
+- **Prone Back Extension** — acefitness.org/resources/everyone/exercise-library/
 - **Dead Bug** — mensjournal.com/fitness/how-to-do-dead-bugs
 - **Bird Dog** — physiohealthandwellness.com — "Bird Dog Exercise: Build Core Strength & Fix Back Pain"
 - **Side Plank** — puregym.com/exercises/abs/side-planks

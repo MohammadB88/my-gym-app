@@ -32,7 +32,18 @@ empty and unoccupied, centered and fully in frame.
 figure, model, silhouette, mannequin, or body part; text, watermarks, logos,
 cartoon or 3D-render look, cluttered background, distracting bystanders.
 
-Prompts are numbered `CB-01 … CB-05`.
+Prompts are numbered `CB-00 … CB-06`.
+
+---
+
+## CB-00 — Cat-Camel
+`docs/images/core-b/00-cat-camel.jpg`
+
+**Prompt:** A single clean exercise mat laid flat on a bright modern gym floor, empty and ready for a kneeling tabletop mobility exercise, with open floor space visible at both ends of the mat. Low-angle three-quarter camera showing the full length of the mat.
+
+**Avoid also:** any person or animal on or near the mat, hands or knees on the mat.
+
+*(Same setup as Core A's Cat-Camel — reuse `docs/images/core-a/00-cat-camel.jpg` if you'd rather not regenerate.)*
 
 ---
 
@@ -86,3 +97,14 @@ Prompts are numbered `CB-01 … CB-05`.
 **Avoid also:** any person on or near the mat, feet or shoulders on the mat.
 
 *(Same setup as Core A's Glute Bridge — reuse `docs/images/core-a/04-glute-bridge.jpg` if you'd rather not regenerate.)*
+
+---
+
+## CB-06 — Prone Back Extension
+`docs/images/core-b/06-prone-back-extension.jpg`
+
+**Prompt:** A single clean exercise mat laid flat on a bright modern gym floor, empty and ready for a face-down floor extension exercise, framed to show open space beyond the head end of the mat. Low three-quarter camera angle showing the full length of the mat.
+
+**Avoid also:** any person on or near the mat, chest or hand marks on the mat.
+
+*(Same setup as Core A's Prone Back Extension — reuse `docs/images/core-a/06-prone-back-extension.jpg` if you'd rather not regenerate.)*

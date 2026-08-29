@@ -30,7 +30,18 @@ empty and unoccupied, centered and fully in frame.
 figure, model, silhouette, mannequin, or body part; text, watermarks, logos,
 cartoon or 3D-render look, cluttered background, distracting bystanders.
 
-Prompts are numbered `CA-01 … CA-05`.
+Prompts are numbered `CA-00 … CA-06`.
+
+---
+
+## CA-00 — Cat-Camel
+`docs/images/core-a/00-cat-camel.jpg`
+
+**Prompt:** A single clean exercise mat laid flat on a bright modern gym floor, empty and ready for a kneeling tabletop mobility exercise, with open floor space visible at both ends of the mat. Low-angle three-quarter camera showing the full length of the mat.
+
+**Avoid also:** any person or animal on or near the mat, hands or knees on the mat.
+
+*(Same setup as Bird Dog — reuse `docs/images/core-a/02-bird-dog.jpg` if you'd rather not regenerate.)*
 
 ---
 
@@ -76,3 +87,12 @@ Prompts are numbered `CA-01 … CA-05`.
 **Prompt:** A single clean exercise mat laid flat on a bright modern gym floor, empty and ready for a full-length floor plank exercise, framed to show generous open space beyond both ends of the mat. Low three-quarter camera angle showing the full length of the mat.
 
 **Avoid also:** any person on or near the mat, forearm or toe marks on the mat.
+
+---
+
+## CA-06 — Prone Back Extension
+`docs/images/core-a/06-prone-back-extension.jpg`
+
+**Prompt:** A single clean exercise mat laid flat on a bright modern gym floor, empty and ready for a face-down floor extension exercise, framed to show open space beyond the head end of the mat. Low three-quarter camera angle showing the full length of the mat.
+
+**Avoid also:** any person on or near the mat, chest or hand marks on the mat.
