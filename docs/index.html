@@ -261,9 +261,12 @@ document.getElementById("logoutBtn").addEventListener("click", async () => {
   window.location.reload();
 });
 
+window.__supabase = supabase;
+
 function showAuthed(session) {
   authScreen.hidden = true;
   appRoot.hidden = false;
+  window.__gymUserId = session.user.id;
   document.getElementById("userEmail").textContent =
     session.user.user_metadata?.user_name || session.user.email || session.user.id;
   window.__gymAppInit?.();
@@ -386,35 +389,222 @@ let currentDay = +(localStorage.getItem("gym-current-day")) || 1;
 let dayExercises = resolveDay(DAYS[currentDay]);
 
 const storeKey = (day) => `gym-day${day}-v1`;
+const historyKey = (day) => `gym-day${day}-history-v1`;
+
+function cloudReady() {
+  return window.__supabase && window.__gymUserId;
+}
+
+// ---- Supabase (source of truth) with localStorage as a read-through cache ----
+// Every read tries Supabase first so multiple devices stay in sync; if the
+// network is down (e.g. bad signal at the gym), we fall back to whatever was
+// last cached so the app still opens with the last-known data. Every write
+// goes straight to Supabase, and the cache is updated alongside it purely so
+// the next offline load has something to show.
 
 // state: { sets: { "0": true }, log: { "0": {w:"", r:""} } } — per day;
 // sets[i] is whether exercise i is marked done (not per-set anymore).
-let state = load();
+let state = { sets: {}, log: {} };
 
-function load() {
-  try {
-    return JSON.parse(localStorage.getItem(storeKey(currentDay))) || { sets: {}, log: {} };
-  } catch { return { sets: {}, log: {} }; }
+function cacheGet(key) {
+  try { return JSON.parse(localStorage.getItem(key)); } catch { return null; }
 }
-function save() { localStorage.setItem(storeKey(currentDay), JSON.stringify(state)); }
+function cacheSet(key, value) { localStorage.setItem(key, JSON.stringify(value)); }
+
+// ---- Pending-writes queue ----
+// A write that fails (no signal, mid-gym) is queued here instead of being
+// silently dropped. Flushed on app load and whenever the browser comes back
+// online; each queued op replays in order and is removed only on success. If
+// a replay fails, we stop (rather than skip it) so ordering is preserved —
+// e.g. a session upsert should land before the next one overwrites it.
+const QUEUE_KEY = "gym-pending-writes-v1";
+
+function queueGet() {
+  const q = cacheGet(QUEUE_KEY);
+  return Array.isArray(q) ? q : [];
+}
+function queueAdd(op) {
+  const q = queueGet();
+  q.push(op);
+  cacheSet(QUEUE_KEY, q);
+}
+
+async function runOp(op) {
+  if (op.type === "session") {
+    await window.__supabase.from("workout_sessions").upsert(op.payload, { onConflict: "user_id,day" });
+  } else if (op.type === "historyInsert") {
+    if (op.payload.rows.length) await window.__supabase.from("workout_history").insert(op.payload.rows);
+  } else if (op.type === "historyReplace") {
+    await window.__supabase.from("workout_history").delete()
+      .eq("user_id", op.payload.user_id).eq("day", op.payload.day);
+    if (op.payload.rows.length) await window.__supabase.from("workout_history").insert(op.payload.rows);
+  }
+}
+
+let queueFlushing = false;
+async function flushQueue() {
+  if (queueFlushing || !cloudReady()) return;
+  queueFlushing = true;
+  try {
+    let q = queueGet();
+    while (q.length) {
+      try {
+        await runOp(q[0]);
+      } catch {
+        break; // still offline (or a real error) — stop, keep the rest queued
+      }
+      q = q.slice(1);
+      cacheSet(QUEUE_KEY, q);
+    }
+  } finally {
+    queueFlushing = false;
+  }
+}
+window.addEventListener("online", flushQueue);
+
+// Loads the live session for `day` from Supabase, falling back to cache on
+// failure. Always returns a usable { sets, log } object.
+async function load(day = currentDay) {
+  if (cloudReady()) {
+    try {
+      const { data, error } = await window.__supabase
+        .from("workout_sessions")
+        .select("state")
+        .eq("user_id", window.__gymUserId)
+        .eq("day", day)
+        .maybeSingle();
+      if (!error) {
+        const s = data?.state || { sets: {}, log: {} };
+        cacheSet(storeKey(day), s);
+        return s;
+      }
+    } catch {}
+  }
+  return cacheGet(storeKey(day)) || { sets: {}, log: {} };
+}
+
+let sessionPushTimer = null;
+// Writes the live session for `day` to Supabase (debounced — this fires on
+// every keystroke) and refreshes the cache immediately. Queues for retry on
+// failure rather than losing the write.
+function save(day = currentDay, s = state) {
+  cacheSet(storeKey(day), s);
+  if (!cloudReady()) return;
+  clearTimeout(sessionPushTimer);
+  sessionPushTimer = setTimeout(async () => {
+    const payload = {
+      user_id: window.__gymUserId,
+      day,
+      state: s,
+      updated_at: new Date().toISOString(),
+    };
+    try {
+      const { error } = await window.__supabase.from("workout_sessions")
+        .upsert(payload, { onConflict: "user_id,day" });
+      if (error) throw error;
+    } catch {
+      queueAdd({ type: "session", payload });
+    }
+  }, 500);
+}
 
 // ---- Workout history (progression) ----
-// Per day, an array of finished sessions:
+// Local shape: an array of finished sessions per day —
 //   [{ date: "2026-07-31", entries: { "1": {w:"40", r:"10"}, ... } }, ...]
-// Keyed by exercise NUMBER (ex.n), not array index, so it survives reordering
-// or edits to a day's `ex` list. Separate localStorage key from live state.
-const historyKey = (day) => `gym-day${day}-history-v1`;
+// Supabase shape: one row per (user, day, date, exercise_num) in
+// `workout_history`, flattened for easy querying; reassembled into the local
+// shape on load. Keyed by exercise NUMBER (ex.n), not array index, so it
+// survives reordering or edits to a day's `ex` list.
+async function loadHistory(day = currentDay) {
+  if (cloudReady()) {
+    try {
+      const { data, error } = await window.__supabase
+        .from("workout_history")
+        .select("date, exercise_num, weight, reps")
+        .eq("user_id", window.__gymUserId)
+        .eq("day", day)
+        .order("date", { ascending: true });
+      if (!error) {
+        const byDate = {};
+        (data || []).forEach((r) => {
+          (byDate[r.date] = byDate[r.date] || {})[r.exercise_num] =
+            { w: r.weight ?? "", r: r.reps ?? "" };
+        });
+        const hist = Object.keys(byDate).sort().map((date) => ({ date, entries: byDate[date] }));
+        cacheSet(historyKey(day), hist);
+        return hist;
+      }
+    } catch {}
+  }
+  const cached = cacheGet(historyKey(day));
+  return Array.isArray(cached) ? cached : [];
+}
 
-function loadHistory(day = currentDay) {
-  try {
-    const h = JSON.parse(localStorage.getItem(historyKey(day)));
-    return Array.isArray(h) ? h : [];
-  } catch { return []; }
-}
+// Appends one finished session to history (used by "Finish workout") and by
+// CSV import (which replaces the whole day's history). `hist` is the full
+// array in the local shape; only the newly-added session(s) need pushing to
+// Supabase, so callers pass `newEntries` for that — CSV import instead
+// replaces the day's cloud rows wholesale.
 function saveHistory(hist, day = currentDay) {
-  localStorage.setItem(historyKey(day), JSON.stringify(hist));
+  cacheSet(historyKey(day), hist);
 }
-let history = loadHistory();
+
+// Pushes one finished session's rows to Supabase; queues for retry on
+// failure so the data isn't lost if you're offline at the gym.
+async function pushHistorySession(day, date, entries) {
+  if (!cloudReady()) return;
+  const rows = Object.keys(entries).map((exNum) => ({
+    user_id: window.__gymUserId,
+    day,
+    date,
+    exercise_num: exNum,
+    weight: entries[exNum].w,
+    reps: entries[exNum].r,
+  }));
+  try {
+    if (rows.length) {
+      const { error } = await window.__supabase.from("workout_history").insert(rows);
+      if (error) throw error;
+    }
+  } catch (err) {
+    queueAdd({ type: "historyInsert", payload: { rows } });
+    throw err;
+  }
+}
+
+// Replaces all of a day's history rows in Supabase with `hist` (local shape).
+// Used by CSV import, which reconstructs history wholesale rather than
+// appending. Queues for retry on failure.
+async function replaceHistory(day, hist) {
+  if (!cloudReady()) return;
+  const rows = [];
+  hist.forEach((session) => {
+    Object.keys(session.entries).forEach((exNum) => {
+      rows.push({
+        user_id: window.__gymUserId,
+        day,
+        date: session.date,
+        exercise_num: exNum,
+        weight: session.entries[exNum].w,
+        reps: session.entries[exNum].r,
+      });
+    });
+  });
+  try {
+    const { error: delErr } = await window.__supabase.from("workout_history").delete()
+      .eq("user_id", window.__gymUserId).eq("day", day);
+    if (delErr) throw delErr;
+    if (rows.length) {
+      const { error } = await window.__supabase.from("workout_history").insert(rows);
+      if (error) throw error;
+    }
+  } catch (err) {
+    queueAdd({ type: "historyReplace", payload: { user_id: window.__gymUserId, day, rows } });
+    throw err;
+  }
+}
+
+let history = [];
 
 // Sessions in which a given exercise (by number) has a logged weight, oldest first.
 function historyFor(exNum) {
@@ -429,16 +619,27 @@ function lastFor(exNum) {
 }
 
 // Switch the visible day: persist choice, reload that day's exercises + progress.
-function selectDay(day) {
+// Renders instantly from cache, then re-renders once the Supabase fetch
+// resolves (so switching days on a slow connection isn't a blank screen).
+async function selectDay(day) {
   currentDay = day;
   localStorage.setItem("gym-current-day", day);
   dayExercises = resolveDay(DAYS[day]);
-  state = load();
-  history = loadHistory();
   document.getElementById("dayTitle").textContent = DAYS[day].title;
   document.getElementById("daySub").textContent = DAYS[day].sub;
   document.querySelectorAll(".tab").forEach((t) =>
     t.classList.toggle("on", +t.dataset.day === day));
+
+  state = cacheGet(storeKey(day)) || { sets: {}, log: {} };
+  const cachedHist = cacheGet(historyKey(day));
+  history = Array.isArray(cachedHist) ? cachedHist : [];
+  render();
+
+  const loadToken = (selectDay.__token = day + ":" + Date.now());
+  const [freshState, freshHistory] = await Promise.all([load(day), loadHistory(day)]);
+  if (selectDay.__token !== loadToken || currentDay !== day) return; // a newer selectDay ran meanwhile
+  state = freshState;
+  history = freshHistory;
   render();
 }
 
@@ -675,7 +876,7 @@ function localISODate() {
 
 // Finish workout: snapshot every exercise that has a logged weight into history,
 // then clear the live session so the next one starts fresh. Keyed by ex.n.
-document.getElementById("finishBtn").addEventListener("click", () => {
+document.getElementById("finishBtn").addEventListener("click", async () => {
   const entries = {};
   dayExercises.forEach((ex, i) => {
     const log = state.log[i] || {};
@@ -689,14 +890,20 @@ document.getElementById("finishBtn").addEventListener("click", () => {
   if (!confirm(`Save this workout (${count} exercise${count > 1 ? "s" : ""}) to history and start fresh?`)) return;
 
   const today = localISODate();
-  history = loadHistory();
+  const day = currentDay;
   history.push({ date: today, entries });
-  saveHistory(history);
+  saveHistory(history, day);
 
   state = { sets: {}, log: {} };
-  save();
+  save(day, state);
   render();
-  alert("Saved to history 💪 Your next session starts fresh.");
+
+  try {
+    await pushHistorySession(day, today, entries);
+    alert("Saved to history 💪 Your next session starts fresh.");
+  } catch {
+    alert("Saved locally, but couldn't reach the server — it'll retry next time you're online.");
+  }
 });
 
 // ---- CSV export / import ----
@@ -717,7 +924,7 @@ document.getElementById("exportBtn").addEventListener("click", () => {
   // Blank line + own header keeps it self-describing and re-importable.
   const histHeader = ["history_date", "exercise_num", "weight", "reps"];
   const histRows = [];
-  loadHistory().forEach((s) => {
+  history.forEach((s) => {
     Object.keys(s.entries).forEach((n) => {
       const en = s.entries[n];
       histRows.push([s.date, n, en.w || "", en.r || ""].map(csvCell).join(","));
@@ -807,6 +1014,9 @@ function applyHistorySection(lines, head) {
   }
   history = Object.keys(byDate).sort().map((date) => ({ date, entries: byDate[date] }));
   saveHistory(history);
+  replaceHistory(currentDay, history).catch(() => {
+    alert("History imported locally, but couldn't sync to the server — it'll retry next time you're online.");
+  });
 }
 
 function parseCsvLine(line) {
@@ -830,6 +1040,7 @@ window.__gymAppInit = () => {
   if (window.__gymAppStarted) return;
   window.__gymAppStarted = true;
   selectDay(currentDay);
+  flushQueue();
 };
 </script>
 </body>
