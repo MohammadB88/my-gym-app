@@ -164,9 +164,47 @@
   button.reset { background: var(--card); color: var(--muted); grid-column: 1 / -1; }
   button.reset:active { background: var(--card2); }
   .done-badge { color: var(--accent); font-size: 0.8rem; margin-left: auto; align-self: center; }
+
+  /* Auth gate */
+  #authScreen {
+    min-height: 80vh; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; text-align: center; gap: 16px;
+  }
+  #authScreen h1 { font-size: 1.3rem; margin: 0; }
+  #authScreen p { color: var(--muted); font-size: 0.85rem; margin: 0; max-width: 320px; }
+  .gh-login-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    min-height: 48px; padding: 0 20px; border-radius: 12px;
+    border: 1px solid var(--line); background: var(--card2); color: var(--text);
+    font-size: 0.95rem; font-weight: 600; cursor: pointer; touch-action: manipulation;
+  }
+  .gh-login-btn:active { background: var(--card); }
+  #authError { color: #f87171; font-size: 0.8rem; max-width: 320px; }
+  #userBar {
+    display: flex; align-items: center; justify-content: flex-end;
+    gap: 8px; margin: -4px 0 8px; color: var(--muted); font-size: 0.78rem;
+  }
+  #userBar button {
+    background: none; border: none; color: var(--muted); font-size: 0.78rem;
+    text-decoration: underline; cursor: pointer; padding: 4px;
+  }
+  [hidden] { display: none !important; }
 </style>
 </head>
 <body>
+
+<div id="authScreen" hidden>
+  <h1>Gym Tracker</h1>
+  <p>Sign in with GitHub to sync your training data.</p>
+  <button class="gh-login-btn" id="loginBtn">Log in with GitHub</button>
+  <p id="authError" hidden></p>
+</div>
+
+<div id="app" hidden>
+<div id="userBar">
+  <span id="userEmail"></span>
+  <button id="logoutBtn">Log out</button>
+</div>
 <header>
   <h1 id="dayTitle">Day 1 — Full-Body</h1>
   <p class="sub" id="daySub">Machine-focused · 2–3 reps in reserve · knee-conscious</p>
@@ -193,8 +231,58 @@
   <button class="reset" id="resetBtn">Reset</button>
   <input type="file" id="importFile" accept=".csv" hidden>
 </div>
+</div>
 
 <script src="exercises.js"></script>
+<script type="module">
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const SUPABASE_URL = "https://nvqiqjuygrwzqwghdmdl.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_W3ofKozTUHcegg1Z_0HuMg_z3xcH40C";
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const authScreen = document.getElementById("authScreen");
+const appRoot = document.getElementById("app");
+const authError = document.getElementById("authError");
+
+document.getElementById("loginBtn").addEventListener("click", async () => {
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: "github",
+    options: { redirectTo: window.location.href },
+  });
+  if (error) {
+    authError.textContent = error.message;
+    authError.hidden = false;
+  }
+});
+
+document.getElementById("logoutBtn").addEventListener("click", async () => {
+  await supabase.auth.signOut();
+  window.location.reload();
+});
+
+function showAuthed(session) {
+  authScreen.hidden = true;
+  appRoot.hidden = false;
+  document.getElementById("userEmail").textContent =
+    session.user.user_metadata?.user_name || session.user.email || session.user.id;
+  window.__gymAppInit?.();
+}
+
+function showLoggedOut() {
+  appRoot.hidden = true;
+  authScreen.hidden = false;
+}
+
+const { data: { session } } = await supabase.auth.getSession();
+if (session) showAuthed(session);
+else showLoggedOut();
+
+supabase.auth.onAuthStateChange((_event, session) => {
+  if (session) showAuthed(session);
+  else showLoggedOut();
+});
+</script>
 <script>
 // All three training days from the plan. Each `ex` entry references an
 // exercise in the EXERCISES registry (exercises.js) by `id` — the shared
@@ -738,7 +826,11 @@ function parseCsvLine(line) {
   return out;
 }
 
-selectDay(currentDay);
+window.__gymAppInit = () => {
+  if (window.__gymAppStarted) return;
+  window.__gymAppStarted = true;
+  selectDay(currentDay);
+};
 </script>
 </body>
 </html>
