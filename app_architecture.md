@@ -1,7 +1,8 @@
 # App Architecture
 
 How the pieces of this single-file app talk to each other. See
-[CLAUDE.md](CLAUDE.md) for the file layout this diagram assumes.
+[CLAUDE.md](CLAUDE.md) for the file layout and the "Auth & data sync" section
+this diagram assumes.
 
 ## Component overview
 
@@ -25,13 +26,17 @@ How the pieces of this single-file app talk to each other. See
 │  │ <script type="module">     │          │                               │
 │  │ Auth module                │          │                               │
 │  │ ───────────────────────    │          │                               │
-│  │ • createClient(SUPABASE_*) │──────────┼───► Supabase (auth.github.com)│
-│  │ • signInWithOAuth /        │          │      OAuth + session storage   │
-│  │   signOut / getSession     │◄─────────┼───  (network, cookies/JWT)     │
+│  │ • createClient(SUPABASE_*) │──────────┼───► Supabase Auth (OAuth)     │
+│  │ • signInWithOAuth /        │          │      GitHub sign-in           │
+│  │   signOut / getSession     │◄─────────┼───                            │
 │  │ • onAuthStateChange        │          │                               │
+│  │ • window.__supabase = ...  │          │                               │
+│  │ • window.__gymUserId = ... │          │                               │
 │  └──────────┬──────────────────┘          │                               │
 │             │ shows/hides #authScreen,    │                               │
-│             │ #app; calls                 │                               │
+│             │ #app; publishes             │                               │
+│             │ window.__supabase /         │                               │
+│             │ window.__gymUserId; calls   │                               │
 │             │ window.__gymAppInit()  ─────┼──────────────┐                │
 │             ▼                             │              ▼                │
 │  ┌─────────────────────────────────────────────────────────────────┐    │
@@ -40,23 +45,27 @@ How the pieces of this single-file app talk to each other. See
 │  │  DAYS{1..5}  ──resolveDay()──►  dayExercises (merged with        │    │
 │  │                                  EXERCISES registry)              │    │
 │  │                                                                    │    │
-│  │  state  = { sets, log }        ◄──► localStorage:                │    │
-│  │  history = [{ date, entries }] ◄──► gym-day<N>-v1                │    │
-│  │                                 ◄──► gym-day<N>-history-v1        │    │
-│  │                                 ◄──► gym-current-day               │    │
+│  │  state  = { sets, log }        ◄─cloud─►  Supabase Postgres      │    │
+│  │  history = [{ date, entries }] ◄─cloud─►  (RLS: one allow-listed │    │
+│  │                                             GitHub user only)     │    │
+│  │                                 ◄─cache─►  localStorage           │    │
+│  │                                             (read-through, +      │    │
+│  │                                              pending-writes queue)│    │
 │  │                                                                    │    │
 │  │  selectDay() ── switches currentDay, reloads state+history,      │    │
 │  │                  calls render()                                   │    │
 │  │  render()    ── rebuilds #list DOM from dayExercises + state     │    │
-│  │  save()      ── writes state to localStorage                     │    │
+│  │  save()      ── debounced (500ms) write to Supabase + cache      │    │
+│  │  flushQueue()── replays queued writes on load / `online` event   │    │
 │  │                                                                    │    │
 │  │  event delegation on #list (click/input) ──► mutate state ──►    │    │
 │  │    save() ──► render()                                            │    │
 │  │                                                                    │    │
-│  │  finishBtn click ──► snapshot state into history ──► saveHistory │    │
-│  │                       ──► reset state ──► save() ──► render()    │    │
+│  │  finishBtn click ──► pushHistorySession() ──► reset state ──►    │    │
+│  │                       save() ──► render()                         │    │
 │  │                                                                    │    │
 │  │  exportBtn/importBtn ──► CSV blob ◄──► state + history           │    │
+│  │  (import also calls replaceHistory() to overwrite cloud rows)    │    │
 │  └─────────────────────────────────────────────────────────────────┘    │
 │                                                                           │
 │  DOM elements (#tabs, #list, #finishBtn, #exportBtn, #importBtn,        │
@@ -75,53 +84,78 @@ How the pieces of this single-file app talk to each other. See
    This is a plain script-tag load into shared global scope — no imports,
    no events.
 
-2. **Auth module ↔ Supabase (network).**
-   The `type="module"` script is the only part of the app that talks to a
-   server. It calls the Supabase JS client to start GitHub OAuth
-   (`signInWithOAuth`), check/restore a session (`getSession`), sign out
-   (`signOut`), and subscribe to session changes (`onAuthStateChange`).
-   Supabase handles the OAuth redirect round-trip and returns a session
-   object; nothing about workout data goes over this channel.
+2. **Auth module ↔ Supabase Auth (network).**
+   The `type="module"` script is the app's one CDN dependency (`esm.sh`
+   import of `@supabase/supabase-js`). It starts GitHub OAuth
+   (`signInWithOAuth`), checks/restores a session (`getSession`), signs out
+   (`signOut`), and subscribes to session changes (`onAuthStateChange`).
+   Requires a real HTTP origin registered with Supabase — auth doesn't work
+   from a bare `file://` URL.
 
-3. **Auth module → main script (one-shot handoff via `window`).**
-   Because the auth module is an ES module (separate scope) and the main
-   app logic is a classic script (global scope), they can't share variables
-   directly. The auth module toggles `#authScreen`/`#app` visibility, then
-   calls `window.__gymAppInit()` — a function the main script attaches to
-   `window` specifically so the module can invoke it. A `window.__gymAppStarted`
-   guard makes this idempotent (auth state can fire the callback more than
-   once, e.g. on token refresh).
+3. **Auth module → main script (handoff via `window`).**
+   The auth module is an ES module (separate scope); the main app logic is a
+   classic script (global scope) — they can't share variables directly. The
+   auth module publishes `window.__supabase` (the client instance) and
+   `window.__gymUserId` (the signed-in user's id) once a session is
+   confirmed, toggles `#authScreen`/`#app`, then calls
+   `window.__gymAppInit()`, a function the main script attaches to `window`
+   specifically for this handoff. A `window.__gymAppStarted` guard makes the
+   init call idempotent (auth state can fire more than once, e.g. on token
+   refresh).
 
-4. **Main script ↔ `localStorage` (synchronous, same-tab persistence).**
-   All workout data is local: `state` (`gym-day<N>-v1`, current sets/log)
-   and `history` (`gym-day<N>-history-v1`, finished sessions) are read on
-   `load()`/`loadHistory()` and written on `save()`/`saveHistory()`. The
-   selected tab persists separately under `gym-current-day`. This is the
-   only persistence layer for training data — Supabase is used for
-   authentication only, not data sync.
+4. **Main script ↔ Supabase Postgres (network, source of truth).**
+   Workout data itself — not just auth — lives in Supabase now.
+   `workout_sessions` holds one row per `(user_id, day)` with the live
+   `{ sets, log }` state as `jsonb`, upserted on a 500ms debounce from
+   `save()`. `workout_history` holds one flattened row per
+   `(user_id, day, date, exercise_num)`, written by `pushHistorySession()`
+   ("Finish workout") or wholesale-replaced by `replaceHistory()` (CSV
+   import). Access is restricted server-side: Row Level Security policies
+   check `user_id = auth.uid() and auth.uid() = '<allow-listed-uuid>'`, so
+   only one specific GitHub account can read or write rows — any other
+   account completes OAuth successfully but gets zero rows and every write
+   rejected. `cloudReady()` (`window.__supabase && window.__gymUserId`)
+   gates every cloud call.
 
-5. **DOM ↔ main script (event delegation, one listener per container).**
-   User interaction never attaches per-element handlers. Clicks on `#tabs`
-   route to `selectDay()`; clicks/input inside `#list` are delegated to a
-   single listener each that inspects `e.target.closest(...)` to figure out
-   whether a set button, progress toggle, or log input was interacted with,
-   then mutates `state`, calls `save()`, and calls `render()` to rebuild the
-   DOM from scratch. `#finishBtn`, `#exportBtn`, `#importBtn`, `#resetBtn`,
-   and `#importFile` each have their own direct listener since they're
-   singletons outside the per-exercise list.
+5. **Main script ↔ `localStorage` (cache + offline queue, not primary).**
+   `localStorage` is now a **read-through cache**, not authoritative:
+   `load()`/`loadHistory()` try Supabase first and fall back to the cached
+   copy only on network failure; every successful read or write also
+   refreshes the cache so the next offline load has something to show. Keys:
+   `gym-day<N>-v1` (session cache), `gym-day<N>-history-v1` (history cache),
+   `gym-current-day` (the one true local-only value — a UI preference, not
+   synced data). A failed write is never silently dropped: it's appended to
+   a **pending-writes queue** (`gym-pending-writes-v1`) and replayed in
+   order by `flushQueue()`, called on app load and on the browser's
+   `online` event, stopping at the first failure to preserve ordering.
 
-6. **CSV import/export ↔ `state`/`history` (file I/O, browser-only).**
+6. **DOM ↔ main script (event delegation, one listener per container).**
+   Clicks on `#tabs` route to `selectDay()`; clicks/input inside `#list` are
+   delegated to a single listener each that inspects
+   `e.target.closest(...)` to figure out whether a set button, progress
+   toggle, or log input was interacted with, then mutates `state`, calls
+   `save()`, and calls `render()` to rebuild the DOM from scratch.
+   `#finishBtn`, `#exportBtn`, `#importBtn`, `#resetBtn`, and `#importFile`
+   each have their own direct listener since they're singletons outside the
+   per-exercise list.
+
+7. **CSV import/export ↔ `state`/`history` (file I/O + cloud writeback).**
    Export serializes `dayExercises` + `state` + full `history` into a CSV
-   `Blob` and triggers a download. Import reads a `File` via `FileReader`,
-   parses it with a hand-rolled `parseCsvLine`, and routes rows back into
-   `state` (session section) or `history` (history section) by matching
-   `exercise_num` — no server involved either direction.
+   `Blob` and triggers a download — purely local, no network. Import reads a
+   `File` via `FileReader`, parses it with a hand-rolled `parseCsvLine`, and
+   routes rows back into `state` (session section) or `history` (history
+   section) by matching `exercise_num`; unlike export, import also calls
+   `replaceHistory()` to overwrite that day's cloud rows so Supabase stays
+   the source of truth after a restore.
 
 ## Key takeaway
 
-There is no client-server data layer for training data — Supabase is scoped
-strictly to authentication (gatekeeping the `#app` view), and every other
-component communicates through **shared globals** (`EXERCISES`, `window.__gymAppInit`),
-**`localStorage`** (state/history persistence), or **DOM events**
-(delegated click/input listeners). This keeps the app dependency-free and
-single-file per [CLAUDE.md](CLAUDE.md)'s conventions.
+Supabase is now **two things at once**: the auth gate (GitHub OAuth) *and*
+the authoritative store for workout data, with access locked to a single
+allow-listed user via Postgres RLS rather than app-level checks.
+`localStorage` has been demoted to a read-through cache and offline queue —
+useful when the gym has bad signal, but never the source of truth. The
+handoff between the ES-module auth script and the classic-script app logic
+still happens through **shared globals** (`window.__supabase`,
+`window.__gymUserId`, `window.__gymAppInit`), and the UI still runs on
+**delegated DOM events** — those parts of the design haven't changed.
