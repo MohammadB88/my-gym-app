@@ -7,6 +7,12 @@
 // Fields: name, scheme (sets x reps · rest), cue, and optional tg / howto
 // reference URLs (see index.html's technogymLink()/howtoLink() for how these
 // are used).
+//
+// `muscles` drives the anatomical muscle map on each card (see index.html's
+// muscleMapSVG()): { primary: [...], secondary: [...] } using the muscle keys
+// defined in MUSCLE_REGIONS. Primary movers render bright; secondary/assisting
+// muscles render dimmer. The map auto-picks the front and/or back body view
+// from which regions are lit, so no view needs to be declared here.
 const EXERCISES = {
   lat_pulldown: {
     name: "Neutral-Grip Lat Pulldown Machine",
@@ -15,6 +21,7 @@ const EXERCISES = {
     tg: "https://www.technogym.com/en-US/product/selection-700-lat-machine_MNLC.html",
     howto: "https://www.acefitness.org/resources/everyone/exercise-library/158/seated-lat-pulldown/",
     defaultWeight: "35",
+    muscles: { primary: ["lats"], secondary: ["biceps", "rear_delts", "mid_back"] },
   },
   chest_press: {
     name: "Machine Chest Press",
@@ -23,6 +30,7 @@ const EXERCISES = {
     tg: "https://www.technogym.com/en-US/product/selection-700-chest-press_MNFC.html",
     howto: "https://www.acefitness.org/resources/everyone/exercise-library/188/seated-chest-press/",
     defaultWeight: "25",
+    muscles: { primary: ["chest"], secondary: ["front_delts", "triceps"] },
   },
   hip_thrust: {
     name: "Hip Thrust / Glute Bridge Machine",
@@ -30,6 +38,7 @@ const EXERCISES = {
     cue: "Drive through the feet, finish with the glutes. Avoid excessive lower-back arching.",
     tg: "https://www.technogym.com/en-US/product/selection-900-hip-thrust_MN2P.html",
     howto: "https://www.acefitness.org/resources/everyone/exercise-library/49/glute-bridge/",
+    muscles: { primary: ["glutes"], secondary: ["hamstrings", "quads"] },
   },
   lying_leg_curl: {
     name: "Lying Leg Curl",
@@ -38,6 +47,7 @@ const EXERCISES = {
     tg: "https://www.technogym.com/en-US/product/selection-900-prone-leg-curl_MNUP.html",
     howto: "https://www.acefitness.org/resources/everyone/exercise-library/131/prone-lying-hamstrings-curl/",
     defaultWeight: "25",
+    muscles: { primary: ["hamstrings"], secondary: ["calves"] },
   },
   reverse_pec_deck: {
     name: "Reverse Pec Deck / Rear-Delt",
@@ -46,6 +56,7 @@ const EXERCISES = {
     tg: "https://www.technogym.com/en-US/product/selection-700-dual-pectoral-reverse-fly_MNNC.html",
     howto: "https://www.acefitness.org/resources/everyone/exercise-library/353/reverse-fly/",
     defaultWeight: "30",
+    muscles: { primary: ["rear_delts"], secondary: ["mid_back", "traps"] },
   },
   overhead_press: {
     name: "Seated Overhead Press",
@@ -54,6 +65,7 @@ const EXERCISES = {
     tg: "https://www.technogym.com/en-US/product/selection-700-shoulder-press_MNEC.html",
     howto: "https://www.acefitness.org/resources/everyone/exercise-library/186/seated-shoulder-press/",
     defaultWeight: "15",
+    muscles: { primary: ["front_delts"], secondary: ["triceps", "traps"] },
   },
   leg_extension: {
     name: "Seated Leg Extension",
@@ -62,6 +74,7 @@ const EXERCISES = {
     tg: "https://www.technogym.com/en-US/product/selection-700-leg-extension_MNJC.html",
     howto: "https://www.acefitness.org/resources/everyone/exercise-library/183/seated-leg-extension/",
     defaultWeight: "32.5",
+    muscles: { primary: ["quads"], secondary: [] },
   },
   hip_abductor: {
     name: "Hip Abductor Machine",
@@ -70,6 +83,7 @@ const EXERCISES = {
     tg: "https://www.technogym.com/en-INT/product/selection-900-abductor_MNPP.html",
     howto: "https://www.acefitness.org/resources/everyone/exercise-library/38/side-lying-hip-abduction/",
     defaultWeight: "55",
+    muscles: { primary: ["glutes"], secondary: [] },
   },
   hip_adductor: {
     name: "Hip Adductor Machine",
@@ -78,6 +92,7 @@ const EXERCISES = {
     tg: "https://www.technogym.com/en-US/product/selection-900-adductor_MNQP.html",
     howto: "https://www.acefitness.org/resources/everyone/exercise-library/39/side-lying-hip-adduction/",
     defaultWeight: "50",
+    muscles: { primary: ["adductors"], secondary: [] },
   },
   biceps_curl: {
     name: "Machine Biceps Curl",
@@ -86,6 +101,7 @@ const EXERCISES = {
     tg: "https://www.technogym.com/en-US/product/selection-900-arm-curl_MNRP.html",
     howto: "https://www.acefitness.org/resources/everyone/exercise-library/184/seated-biceps-curl/",
     defaultWeight: "25",
+    muscles: { primary: ["biceps"], secondary: ["forearms"] },
   },
   triceps_extension: {
     name: "Triceps Extension / Pressdown",
@@ -94,6 +110,7 @@ const EXERCISES = {
     tg: "https://www.technogym.com/en-US/product/selection-900-arm-extension_MNSP.html",
     howto: "https://www.acefitness.org/resources/everyone/exercise-library/185/triceps-pushdowns/",
     defaultWeight: "40",
+    muscles: { primary: ["triceps"], secondary: [] },
   },
   pallof_press: {
     name: "Pallof Press / Dead Bug",
@@ -101,6 +118,7 @@ const EXERCISES = {
     cue: "Brace gently; keep pelvis and rib cage controlled. Stability over load or speed.",
     tg: "https://www.technogym.com/en-US/product/dual-adjustable-pulley-performance_MB43.html",
     howto: "https://www.acefitness.org/resources/everyone/exercise-library/332/standing-anti-rotation-press/",
+    muscles: { primary: ["obliques", "abs"], secondary: [] },
   },
   chest_supported_row: {
     name: "Chest-Supported Row Machine",
@@ -109,6 +127,7 @@ const EXERCISES = {
     tg: "https://www.technogym.com/en-INT/product/selection-700-low-row_MNHC.html",
     howto: "https://www.acefitness.org/resources/everyone/exercise-library/48/seated-row/",
     defaultWeight: "30",
+    muscles: { primary: ["mid_back", "lats"], secondary: ["biceps", "rear_delts"] },
   },
   incline_chest_press: {
     name: "Incline Machine Chest Press",
@@ -116,12 +135,14 @@ const EXERCISES = {
     cue: "Handles around upper-chest level. Keep shoulder blades stable; stop before form changes.",
     tg: "https://www.technogym.com/en-US/product/pure-incline-chest-press_MG1500-NBGJV0.html",
     howto: "https://www.acefitness.org/resources/everyone/exercise-library/25/incline-chest-press/",
+    muscles: { primary: ["chest", "front_delts"], secondary: ["triceps"] },
   },
   back_extension: {
     name: "Back Extension (Machine or 45°)",
     scheme: "3 × 10–12 · 75–90s rest",
     cue: "Small hip-driven arc. Finish tall without leaning backward or hyperextending.",
     tg: "https://www.technogym.com/en-US/product/selection-700-lower-back_MNCC.html",
+    muscles: { primary: ["lower_back"], secondary: ["glutes", "hamstrings"] },
   },
   seated_leg_curl: {
     name: "Seated Leg Curl",
@@ -129,6 +150,7 @@ const EXERCISES = {
     cue: "Align knees with the pivot. Curl smoothly and control the return without bouncing.",
     tg: "https://www.technogym.com/en-INT/product/selection-700-leg-curl_MNIC.html",
     howto: "https://www.acefitness.org/resources/everyone/exercise-library/153/lying-hamstrings-curl/",
+    muscles: { primary: ["hamstrings"], secondary: ["calves"] },
   },
   pullover: {
     name: "Machine Pullover / Straight-Arm Pulldown",
@@ -136,6 +158,7 @@ const EXERCISES = {
     cue: "Keep ribs controlled. Move through the shoulders; don't turn it into a triceps press.",
     tg: "https://www.technogym.com/en-INT/product/pure-strength-pullover_MG9000-NBGJV0.html",
     howto: "https://www.acefitness.org/resources/everyone/exercise-library/37/lying-pullovers/",
+    muscles: { primary: ["lats"], secondary: ["chest", "triceps"] },
   },
   lateral_raise: {
     name: "Machine Lateral Raise",
@@ -143,6 +166,7 @@ const EXERCISES = {
     cue: "Raise only to a comfortable height. Keep shoulders down and avoid swinging.",
     tg: "https://www.technogym.com/en-INT/product/selection-700-delts-machine_MNKC.html",
     howto: "https://www.acefitness.org/resources/everyone/exercise-library/26/lateral-raise/",
+    muscles: { primary: ["side_delts"], secondary: ["traps"] },
   },
   calf_raise: {
     name: "Seated / Standing Calf Raise",
@@ -150,12 +174,14 @@ const EXERCISES = {
     cue: "Controlled stretch and rise. Keep pressure even across the forefoot.",
     tg: "https://www.technogym.com/en-US/product/selection-900-standing-calf_MN5P.html",
     howto: "https://www.acefitness.org/resources/everyone/exercise-library/51/calf-raises/",
+    muscles: { primary: ["calves"], secondary: [] },
   },
   face_pull: {
     name: "Cable Face Pull",
     scheme: "2 × 12–15 · 60–75s rest",
     cue: "Pull toward eye level with the elbows high enough to stay comfortable. Don't arch the back.",
     tg: "https://www.technogym.com/en-US/product/dual-adjustable-pulley-performance_MB43.html",
+    muscles: { primary: ["rear_delts"], secondary: ["traps", "mid_back"] },
   },
   hammer_curl: {
     name: "Machine Hammer / Neutral-Grip Curl",
@@ -163,6 +189,7 @@ const EXERCISES = {
     cue: "Upper arms still, wrists neutral. Stop before the shoulders roll forward. Pair with 10B.",
     tg: "https://www.technogym.com/en-US/product/selection-900-arm-curl_MNRP.html",
     howto: "https://www.acefitness.org/resources/everyone/exercise-library/10/hammer-curl/",
+    muscles: { primary: ["biceps", "forearms"], secondary: [] },
   },
   rope_pressdown: {
     name: "Rope Triceps Pressdown",
@@ -170,12 +197,14 @@ const EXERCISES = {
     cue: "Keep elbows close and shoulders relaxed. No torso momentum. Pair with 10A.",
     tg: "https://www.technogym.com/en-US/product/dual-adjustable-pulley-performance_MB43.html",
     howto: "https://www.acefitness.org/resources/everyone/exercise-library/185/triceps-pushdowns/",
+    muscles: { primary: ["triceps"], secondary: [] },
   },
   side_plank: {
     name: "Side Plank / Bird Dog",
     scheme: "2–3 sets per side · 45–60s rest",
     cue: "Brace gently and keep the trunk long. Choose the version that stays pain-free.",
     tg: "https://www.acefitness.org/resources/everyone/exercise-library/14/bird-dog/",
+    muscles: { primary: ["obliques"], secondary: ["abs", "glutes"] },
   },
   high_row: {
     name: "High Row Machine",
@@ -183,6 +212,7 @@ const EXERCISES = {
     cue: "Keep the chest supported. Pull down and back without leaning or shrugging.",
     tg: "https://www.technogym.com/en-US/product/selection-900-vertical-traction_MNGP.html",
     howto: "https://www.acefitness.org/resources/everyone/exercise-library/336/high-row/",
+    muscles: { primary: ["lats", "mid_back"], secondary: ["biceps", "rear_delts"] },
   },
   shoulder_press: {
     name: "Seated Machine Shoulder Press",
@@ -191,6 +221,7 @@ const EXERCISES = {
     tg: "https://www.technogym.com/en-INT/product/selection-700-shoulder-press_MNEC.html",
     howto: "https://www.acefitness.org/resources/everyone/exercise-library/186/seated-shoulder-press/",
     defaultWeight: "15",
+    muscles: { primary: ["front_delts"], secondary: ["triceps", "traps"] },
   },
   pec_deck: {
     name: "Pec Deck / Cable Chest Fly",
@@ -199,6 +230,7 @@ const EXERCISES = {
     tg: "https://www.technogym.com/en-US/product/selection-900-pectoral_MNTP.html",
     howto: "https://www.acefitness.org/resources/everyone/exercise-library/160/standing-chest-fly/",
     defaultWeight: "32.5",
+    muscles: { primary: ["chest"], secondary: ["front_delts"] },
   },
   cable_row: {
     name: "Neutral-Grip Seated Cable Row",
@@ -206,6 +238,7 @@ const EXERCISES = {
     cue: "Stay tall and pull toward the lower ribs. Avoid rocking backward.",
     tg: "https://www.technogym.com/en-US/product/selection-900-low-row_MNHP.html",
     howto: "https://www.acefitness.org/resources/everyone/exercise-library/48/seated-row/",
+    muscles: { primary: ["mid_back", "lats"], secondary: ["biceps", "rear_delts"] },
   },
   seated_calf_raise: {
     name: "Seated Calf Raise",
@@ -213,12 +246,14 @@ const EXERCISES = {
     cue: "Pause briefly at the top and lower under control. Avoid bouncing.",
     tg: "https://www.technogym.com/en-US/product/pure-seated-calf_MG4600-NBGJV0.html",
     howto: "https://www.acefitness.org/resources/everyone/exercise-library/51/calf-raises/",
+    muscles: { primary: ["calves"], secondary: [] },
   },
   cable_hip_extension: {
     name: "Supported Cable Hip Extension",
     scheme: "2 × 12–15 per side · 60s rest",
     cue: "Hold a stable support. Move from the hip without twisting the pelvis or arching.",
     tg: "https://www.technogym.com/en-US/product/dual-adjustable-pulley-performance_MB43.html",
+    muscles: { primary: ["glutes"], secondary: ["hamstrings"] },
   },
   dead_bug: {
     name: "Dead Bug",
@@ -226,6 +261,7 @@ const EXERCISES = {
     cue: "Keep the lower back gently supported and move the opposite arm and leg slowly.",
     tg: "https://www.acefitness.org/resources/everyone/exercise-library/147/supine-dead-bug/",
     bodyweight: true,
+    muscles: { primary: ["abs"], secondary: ["obliques"] },
   },
   bird_dog: {
     name: "Bird Dog",
@@ -233,12 +269,14 @@ const EXERCISES = {
     cue: "Pause at full extension, keep hips square. One of McGill's 'Big Three' spine-stability moves.",
     tg: "https://www.acefitness.org/resources/everyone/exercise-library/14/bird-dog/",
     bodyweight: true,
+    muscles: { primary: ["lower_back", "glutes"], secondary: ["abs", "rear_delts"] },
   },
   side_plank_core: {
     name: "Side Plank",
     scheme: "~15–30s per side to start, building up · 30–45s rest",
     cue: "Stack hips, straight line head-to-feet. One of McGill's 'Big Three' spine-stability moves.",
     bodyweight: true,
+    muscles: { primary: ["obliques"], secondary: ["abs"] },
   },
   glute_bridge_core: {
     name: "Glute Bridge",
@@ -246,18 +284,21 @@ const EXERCISES = {
     cue: "Drive through heels, don't overarch the lower back.",
     tg: "https://www.acefitness.org/resources/everyone/exercise-library/49/glute-bridge/",
     bodyweight: true,
+    muscles: { primary: ["glutes"], secondary: ["hamstrings", "abs"] },
   },
   front_plank: {
     name: "Front Plank",
     scheme: "~20–30s per round, building to 60s · 30–45s rest",
     cue: "Neutral spine, brace core, keep hips level.",
     bodyweight: true,
+    muscles: { primary: ["abs"], secondary: ["obliques", "front_delts"] },
   },
   slow_russian_twist: {
     name: "Slow Russian Twist",
     scheme: "~10–12 slow reps per side · ~2s per rotation · 30–45s rest",
     cue: "Rotate from the ribcage, not the arms. Feet can stay grounded.",
     bodyweight: true,
+    muscles: { primary: ["obliques"], secondary: ["abs"] },
   },
   cat_camel: {
     name: "Cat-Camel",
@@ -265,6 +306,7 @@ const EXERCISES = {
     cue: "Slow flexion/extension through the full range. Mobility warm-up, not a strength move.",
     tg: "https://www.acefitness.org/resources/pros/expert-articles/7077/low-back-exercises-stuart-mcgill-s-big-three/",
     bodyweight: true,
+    muscles: { primary: ["lower_back"], secondary: ["abs"] },
   },
   prone_back_extension: {
     name: "Prone Back Extension (floor)",
@@ -272,6 +314,7 @@ const EXERCISES = {
     cue: "Lift the chest a few centimetres, chin tucked, glutes squeezed. Short arc, no neck cranking.",
     tg: "https://www.acefitness.org/resources/everyone/exercise-library/",
     bodyweight: true,
+    muscles: { primary: ["lower_back"], secondary: ["glutes", "hamstrings"] },
   },
 };
 

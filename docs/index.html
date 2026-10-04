@@ -17,6 +17,7 @@
     --accent: #4ade80;
     --accent-dim: #2a3b30;
     --line: #2c313b;
+    --mm-base: #333945;
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html { -webkit-text-size-adjust: 100%; }
@@ -65,28 +66,43 @@
   }
   .exercise.done { border-color: var(--accent-dim); }
 
+  /* Anatomical muscle map — replaces the old machine photo. A front/back body
+     figure with the trained muscles highlighted, plus a named legend. */
   .ex-img {
     position: relative;
     width: 100%;
-    aspect-ratio: 2 / 1;
-    max-height: 200px;
     border-radius: 10px;
     overflow: hidden;
     margin-bottom: 12px;
     background: var(--card2);
+    padding: 10px 10px 8px;
   }
-  .ex-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  /* Placeholder is hidden by default; shown only when the <img> fails to load */
-  .ex-img-ph { display: none; }
-  .ex-img.missing {
+  .ex-img-ph {
     display: flex; align-items: center; justify-content: center;
-    background:
-      repeating-linear-gradient(45deg, var(--card2) 0 12px, #1e222b 12px 24px);
-    border: 1px dashed var(--line);
+    min-height: 120px; color: var(--muted); font-size: 0.8rem; letter-spacing: .02em;
   }
-  .ex-img.missing .ex-img-ph {
-    display: block; color: var(--muted); font-size: 0.8rem; letter-spacing: .02em;
+  /* Muscle-map figures: one (front or back) or two, centered side by side. */
+  .mm { display: flex; justify-content: center; gap: 16px; }
+  .mm-fig { margin: 0; text-align: center; }
+  .mm-fig svg { height: 150px; width: auto; display: block; }
+  .mm-fig figcaption {
+    margin-top: 2px; color: var(--muted); font-size: 0.68rem;
+    letter-spacing: .04em; text-transform: uppercase;
   }
+  /* Body outline + muscle-region fills. --mm-base (in :root) is the dim resting
+     fill; lit primaries use the accent, lit2 secondaries a muted mid-green. */
+  .mm-outline { fill: #2b313c; stroke: #3a4150; stroke-width: 1.4; }
+  .mm-region { fill: var(--mm-base); stroke: #1a1d24; stroke-width: 0.6; transition: fill .15s ease; }
+  .mm-region.lit  { fill: var(--accent); }
+  .mm-region.lit2 { fill: #2f7a4e; }
+  /* Named legend under the figure(s): primary chips bold-accent, secondary muted. */
+  .mm-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; margin-top: 8px; }
+  .mm-chip {
+    font-size: 0.68rem; padding: 2px 8px; border-radius: 99px;
+    border: 1px solid var(--line); line-height: 1.4;
+  }
+  .mm-chip.p { color: var(--accent); border-color: var(--accent-dim); background: var(--accent-dim); font-weight: 600; }
+  .mm-chip.s { color: var(--muted); }
   .ex-head { display: flex; align-items: baseline; gap: 8px; }
   .ex-num {
     font-size: 0.75rem; font-weight: 700; color: var(--accent);
@@ -293,88 +309,88 @@ supabase.auth.onAuthStateChange((_event, session) => {
 // multiple days without duplicating its data. `n` is this day's display
 // number (position), and `sets` is this day's set count for that exercise —
 // both stay per-day since the same exercise can be programmed differently
-// across days. `img` also stays per-day: the same machine is often
-// photographed differently per day. To edit a workout, edit the `ex` array
-// for that day; to change an exercise's own details, edit it in exercises.js.
+// across days. To edit a workout, edit the `ex` array for that day; to change
+// an exercise's own details (including the muscles its card highlights), edit
+// it in exercises.js.
 const DAYS = {
   1: {
     title: "Day 1 — Full-Body",
     sub: "Machine-focused · 2–3 reps in reserve · knee-conscious",
     ex: [
-      { n: "1",  id: "lat_pulldown",       sets: 3, img: "images/d1/01-lat-pulldown.jpg" },
-      { n: "2",  id: "chest_press",        sets: 3, img: "images/d1/02-chest-press.jpg" },
-      { n: "3",  id: "hip_thrust",         sets: 3, img: "images/d1/03-hip-thrust.jpg" },
-      { n: "4",  id: "lying_leg_curl",     sets: 3, img: "images/d1/04-lying-leg-curl.jpg" },
-      { n: "5",  id: "reverse_pec_deck",   sets: 2, img: "images/d1/05-reverse-pec-deck.jpg" },
-      { n: "6",  id: "overhead_press",     sets: 2, img: "images/d1/06-overhead-press.jpg" },
-      { n: "7",  id: "leg_extension",      sets: 2, img: "images/d1/07-leg-extension.jpg" },
-      { n: "8",  id: "hip_abductor",       sets: 2, img: "images/d1/08-hip-abductor.jpg" },
-      { n: "9",  id: "hip_adductor",       sets: 2, img: "images/d1/09-hip-adductor.jpg" },
-      { n: "10A", id: "biceps_curl",       sets: 2, img: "images/d1/10a-biceps-curl.jpg" },
-      { n: "10B", id: "triceps_extension", sets: 2, img: "images/d1/10b-triceps-extension.jpg" },
-      { n: "11", id: "pallof_press",       sets: 3, img: "images/d1/11-pallof-press.jpg" },
+      { n: "1",  id: "lat_pulldown",       sets: 3 },
+      { n: "2",  id: "chest_press",        sets: 3 },
+      { n: "3",  id: "hip_thrust",         sets: 3 },
+      { n: "4",  id: "lying_leg_curl",     sets: 3 },
+      { n: "5",  id: "reverse_pec_deck",   sets: 2 },
+      { n: "6",  id: "overhead_press",     sets: 2 },
+      { n: "7",  id: "leg_extension",      sets: 2 },
+      { n: "8",  id: "hip_abductor",       sets: 2 },
+      { n: "9",  id: "hip_adductor",       sets: 2 },
+      { n: "10A", id: "biceps_curl",       sets: 2 },
+      { n: "10B", id: "triceps_extension", sets: 2 },
+      { n: "11", id: "pallof_press",       sets: 3 },
     ],
   },
   2: {
     title: "Day 2 — Push/Pull + Posterior",
     sub: "Back/posture emphasis · pull-biased · knee-conscious",
     ex: [
-      { n: "1",  id: "chest_supported_row", sets: 3, img: "images/d2/01-chest-supported-row.jpg" },
-      { n: "2",  id: "incline_chest_press", sets: 3, img: "images/d2/02-incline-chest-press.jpg" },
-      { n: "3",  id: "back_extension",      sets: 3, img: "images/d2/03-back-extension.jpg" },
-      { n: "4",  id: "seated_leg_curl",     sets: 3, img: "images/d2/04-seated-leg-curl.jpg" },
-      { n: "5",  id: "pullover",            sets: 2, img: "images/d2/05-pullover.jpg" },
-      { n: "6",  id: "lateral_raise",       sets: 2, img: "images/d2/06-lateral-raise.jpg" },
-      { n: "7",  id: "calf_raise",          sets: 3, img: "images/d2/07-calf-raise.jpg" },
-      { n: "8",  id: "hip_abductor",        sets: 2, img: "images/d2/08-hip-abductor.jpg" },
-      { n: "9",  id: "face_pull",           sets: 2, img: "images/d2/09-face-pull.jpg" },
-      { n: "10A", id: "hammer_curl",        sets: 2, img: "images/d2/10a-hammer-curl.jpg" },
-      { n: "10B", id: "rope_pressdown",     sets: 2, img: "images/d2/10b-rope-pressdown.jpg" },
-      { n: "11", id: "side_plank",          sets: 3, img: "images/d2/11-side-plank.jpg" },
+      { n: "1",  id: "chest_supported_row", sets: 3 },
+      { n: "2",  id: "incline_chest_press", sets: 3 },
+      { n: "3",  id: "back_extension",      sets: 3 },
+      { n: "4",  id: "seated_leg_curl",     sets: 3 },
+      { n: "5",  id: "pullover",            sets: 2 },
+      { n: "6",  id: "lateral_raise",       sets: 2 },
+      { n: "7",  id: "calf_raise",          sets: 3 },
+      { n: "8",  id: "hip_abductor",        sets: 2 },
+      { n: "9",  id: "face_pull",           sets: 2 },
+      { n: "10A", id: "hammer_curl",        sets: 2 },
+      { n: "10B", id: "rope_pressdown",     sets: 2 },
+      { n: "11", id: "side_plank",          sets: 3 },
     ],
   },
   3: {
     title: "Day 3 — Strength + Control",
     sub: "Balanced push/pull · glute & quad control · low impact",
     ex: [
-      { n: "1",  id: "high_row",            sets: 3, img: "images/d3/01-high-row.jpg" },
-      { n: "2",  id: "shoulder_press",      sets: 3, img: "images/d3/02-shoulder-press.jpg" },
-      { n: "3",  id: "hip_thrust",          sets: 3, img: "images/d3/03-hip-thrust.jpg" },
-      { n: "4",  id: "leg_extension",       sets: 2, img: "images/d3/04-leg-extension.jpg" },
-      { n: "5",  id: "pec_deck",            sets: 2, img: "images/d3/05-pec-deck.jpg" },
-      { n: "6",  id: "cable_row",           sets: 2, img: "images/d3/06-cable-row.jpg" },
-      { n: "7",  id: "seated_calf_raise",   sets: 3, img: "images/d3/07-seated-calf-raise.jpg" },
-      { n: "8",  id: "cable_hip_extension", sets: 2, img: "images/d3/08-cable-hip-extension.jpg" },
-      { n: "9",  id: "hip_adductor",        sets: 2, img: "images/d3/09-hip-adductor.jpg" },
-      { n: "10A", id: "biceps_curl",        sets: 2, img: "images/d3/10a-biceps-curl.jpg" },
-      { n: "10B", id: "triceps_extension",  sets: 2, img: "images/d3/10b-triceps-extension.jpg" },
-      { n: "11", id: "dead_bug",            sets: 3, img: "images/d3/11-dead-bug.jpg" },
+      { n: "1",  id: "high_row",            sets: 3 },
+      { n: "2",  id: "shoulder_press",      sets: 3 },
+      { n: "3",  id: "hip_thrust",          sets: 3 },
+      { n: "4",  id: "leg_extension",       sets: 2 },
+      { n: "5",  id: "pec_deck",            sets: 2 },
+      { n: "6",  id: "cable_row",           sets: 2 },
+      { n: "7",  id: "seated_calf_raise",   sets: 3 },
+      { n: "8",  id: "cable_hip_extension", sets: 2 },
+      { n: "9",  id: "hip_adductor",        sets: 2 },
+      { n: "10A", id: "biceps_curl",        sets: 2 },
+      { n: "10B", id: "triceps_extension",  sets: 2 },
+      { n: "11", id: "dead_bug",            sets: 3 },
     ],
   },
   4: {
     title: "Core A — Stability",
     sub: "2–3 rounds · 30–45s rest between exercises",
     ex: [
-      { n: "1", id: "cat_camel",            sets: 1, img: "images/core-a/00-cat-camel.jpg" },
-      { n: "2", id: "dead_bug",             sets: 3, img: "images/core-a/01-dead-bug.jpg" },
-      { n: "3", id: "bird_dog",             sets: 3, img: "images/core-a/02-bird-dog.jpg" },
-      { n: "4", id: "side_plank_core",      sets: 3, img: "images/core-a/03-side-plank.jpg" },
-      { n: "5", id: "glute_bridge_core",    sets: 3, img: "images/core-a/04-glute-bridge.jpg" },
-      { n: "6", id: "front_plank",          sets: 3, img: "images/core-a/05-front-plank.jpg" },
-      { n: "7", id: "prone_back_extension", sets: 3, img: "images/core-a/06-prone-back-extension.jpg" },
+      { n: "1", id: "cat_camel",            sets: 1 },
+      { n: "2", id: "dead_bug",             sets: 3 },
+      { n: "3", id: "bird_dog",             sets: 3 },
+      { n: "4", id: "side_plank_core",      sets: 3 },
+      { n: "5", id: "glute_bridge_core",    sets: 3 },
+      { n: "6", id: "front_plank",          sets: 3 },
+      { n: "7", id: "prone_back_extension", sets: 3 },
     ],
   },
   5: {
     title: "Core B — Oblique Emphasis",
     sub: "2–3 rounds · 30–45s rest between exercises",
     ex: [
-      { n: "1", id: "cat_camel",            sets: 1, img: "images/core-b/00-cat-camel.jpg" },
-      { n: "2", id: "dead_bug",             sets: 3, img: "images/core-b/01-dead-bug.jpg" },
-      { n: "3", id: "side_plank_core",      sets: 3, img: "images/core-b/02-side-plank.jpg" },
-      { n: "4", id: "bird_dog",             sets: 3, img: "images/core-b/03-bird-dog.jpg" },
-      { n: "5", id: "slow_russian_twist",   sets: 3, img: "images/core-b/04-slow-russian-twist.jpg" },
-      { n: "6", id: "glute_bridge_core",    sets: 3, img: "images/core-b/05-glute-bridge.jpg" },
-      { n: "7", id: "prone_back_extension", sets: 3, img: "images/core-b/06-prone-back-extension.jpg" },
+      { n: "1", id: "cat_camel",            sets: 1 },
+      { n: "2", id: "dead_bug",             sets: 3 },
+      { n: "3", id: "side_plank_core",      sets: 3 },
+      { n: "4", id: "bird_dog",             sets: 3 },
+      { n: "5", id: "slow_russian_twist",   sets: 3 },
+      { n: "6", id: "glute_bridge_core",    sets: 3 },
+      { n: "7", id: "prone_back_extension", sets: 3 },
     ],
   },
 };
@@ -710,6 +726,117 @@ function howtoLink(ex) {
            label: "▶ Watch form videos ↗" };
 }
 
+// ---- Anatomical muscle map ----
+// Each card shows which muscles an exercise trains on a stylized body figure,
+// instead of a photo of the machine. Two hand-drawn silhouettes — a front and a
+// back view — carry one SVG shape per muscle region, tagged `data-muscle`. The
+// shapes render dim (var(--mm-base)) by default; muscleMapSVG() tints an
+// exercise's primary movers bright (accent) and its secondary/assisting muscles
+// a mid shade. The view(s) shown are chosen automatically from which muscles are
+// lit (front-only, back-only, or both), so nothing needs to be declared per
+// exercise beyond its `muscles: { primary, secondary }` list in exercises.js.
+//
+// Human-readable labels for the muscle keys used in exercises.js — shown as a
+// small caption under the figure so the highlighted regions are unambiguous.
+const MUSCLE_LABELS = {
+  chest: "Chest", front_delts: "Front delts", side_delts: "Side delts",
+  rear_delts: "Rear delts", biceps: "Biceps", triceps: "Triceps",
+  forearms: "Forearms", abs: "Abs", obliques: "Obliques", quads: "Quads",
+  adductors: "Inner thigh", lats: "Lats", traps: "Traps", mid_back: "Mid-back",
+  lower_back: "Lower back", glutes: "Glutes", hamstrings: "Hamstrings",
+  calves: "Calves",
+};
+
+// Which body view each muscle lives on. Muscles visible from the front vs. the
+// back decide which silhouette(s) a given exercise needs.
+const MUSCLE_VIEW = {
+  chest: "front", front_delts: "front", side_delts: "front", biceps: "front",
+  abs: "front", obliques: "front", quads: "front", adductors: "front",
+  forearms: "front",
+  rear_delts: "back", triceps: "back", lats: "back", traps: "back",
+  mid_back: "back", lower_back: "back", glutes: "back", hamstrings: "back",
+  calves: "back",
+};
+
+// SVG shapes for each muscle, per view. Coordinates live in a 120×300 viewBox
+// (a schematic figure facing us / facing away). Mirrored pairs (left/right)
+// are drawn as two shapes sharing one data-muscle tag so both light together.
+const MM_FRONT = {
+  front_delts: '<path data-muscle="front_delts" d="M34 78 q-9 2-11 13 q9 3 15-2 z"/><path data-muscle="front_delts" d="M86 78 q9 2 11 13 q-9 3-15-2 z"/>',
+  side_delts:  '<path data-muscle="side_delts" d="M30 80 q-10 4-10 16 l7 1 q2-11 8-14z"/><path data-muscle="side_delts" d="M90 80 q10 4 10 16 l-7 1 q-2-11-8-14z"/>',
+  chest:       '<path data-muscle="chest" d="M60 82 q-16 0-22 6 q-2 12 6 18 q12 5 16-6z"/><path data-muscle="chest" d="M60 82 q16 0 22 6 q2 12-6 18 q-12 5-16-6z"/>',
+  biceps:      '<path data-muscle="biceps" d="M22 98 q-6 10-5 24 q7 2 10-3 q0-14-1-22z"/><path data-muscle="biceps" d="M98 98 q6 10 5 24 q-7 2-10-3 q0-14 1-22z"/>',
+  forearms:    '<path data-muscle="forearms" d="M15 126 q-3 14 1 28 q6-1 8-5 q-1-16-3-25z"/><path data-muscle="forearms" d="M105 126 q3 14-1 28 q-6-1-8-5 q1-16 3-25z"/>',
+  abs:         '<path data-muscle="abs" d="M50 110 h20 v44 q-10 6-20 0z"/>',
+  obliques:    '<path data-muscle="obliques" d="M46 112 q-8 2-9 16 q1 14 9 22 z"/><path data-muscle="obliques" d="M74 112 q8 2 9 16 q-1 14-9 22 z"/>',
+  adductors:   '<path data-muscle="adductors" d="M58 168 q-8 20-6 44 l6 2 z"/><path data-muscle="adductors" d="M62 168 q8 20 6 44 l-6 2 z"/>',
+  quads:       '<path data-muscle="quads" d="M44 166 q-6 30-2 58 q8 3 12-2 q2-30 1-56z"/><path data-muscle="quads" d="M76 166 q6 30 2 58 q-8 3-12-2 q-2-30-1-56z"/>',
+};
+const MM_BACK = {
+  traps:       '<path data-muscle="traps" d="M60 72 L40 80 q18 14 20 2 q2 12 20-2z"/>',
+  rear_delts:  '<path data-muscle="rear_delts" d="M34 80 q-10 3-12 14 q9 3 16-3z"/><path data-muscle="rear_delts" d="M86 80 q10 3 12 14 q-9 3-16-3z"/>',
+  lats:        '<path data-muscle="lats" d="M40 92 q-6 20 6 34 q10-2 12-12 l-2-24z"/><path data-muscle="lats" d="M80 92 q6 20-6 34 q-10-2-12-12 l2-24z"/>',
+  mid_back:    '<path data-muscle="mid_back" d="M50 86 h20 v30 h-20z"/>',
+  // (traps + rear_delts above cover the upper back)
+  triceps:     '<path data-muscle="triceps" d="M22 98 q-6 12-5 26 q7 2 10-3 q0-15-1-24z"/><path data-muscle="triceps" d="M98 98 q6 12 5 26 q-7 2-10-3 q0-15 1-24z"/>',
+  lower_back:  '<path data-muscle="lower_back" d="M50 118 h20 v26 q-10 5-20 0z"/>',
+  glutes:      '<path data-muscle="glutes" d="M60 146 q-18 0-18 18 q4 12 18 10z"/><path data-muscle="glutes" d="M60 146 q18 0 18 18 q-4 12-18 10z"/>',
+  hamstrings:  '<path data-muscle="hamstrings" d="M46 178 q-5 28-2 54 q8 3 11-2 q2-28 0-52z"/><path data-muscle="hamstrings" d="M74 178 q5 28 2 54 q-8 3-11-2 q-2-28 0-52z"/>',
+  calves:      '<path data-muscle="calves" d="M45 236 q-4 20 0 40 q7 2 10-2 q2-20 0-38z"/><path data-muscle="calves" d="M75 236 q4 20 0 40 q-7 2-10-2 q-2-20 0-38z"/>',
+};
+
+// A faint body outline (same for both views) so lit muscles read as "part of a
+// person", not floating blobs. Head, torso, arms, legs in the 120×300 box.
+const MM_BODY = '<path class="mm-outline" d="M60 8 q11 0 11 12 q0 11-11 13 q-11-2-11-13 q0-12 11-12z '
+  + 'M44 36 q16-5 32 0 q10 3 24 16 q8 8 12 24 l-9 3 q-5-14-14-20 q2 24-2 40 '
+  + 'l4 60 q2 30-2 56 q-3 24-6 44 l-10 0 q-2-26-6-50 q-4 24-6 50 l-10 0 '
+  + 'q-3-20-6-44 q-4-26-2-56 l4-60 q-4-16-2-40 q-9 6-14 20 l-9-3 q4-16 12-24 '
+  + 'q14-13 24-16z"/>';
+
+// Returns an inline-SVG muscle map for an exercise, or "" if it has no
+// `muscles` data. Lights primary movers bright and secondary muscles mid; shows
+// the front view, the back view, or both depending on where the lit muscles sit.
+function muscleMapSVG(ex) {
+  const m = ex.muscles;
+  if (!m) return "";
+  const primary = m.primary || [];
+  const secondary = m.secondary || [];
+  const level = {}; // muscle key -> "primary" | "secondary" (primary wins)
+  secondary.forEach((k) => { level[k] = "secondary"; });
+  primary.forEach((k) => { level[k] = "primary"; });
+  const lit = Object.keys(level);
+  if (!lit.length) return "";
+
+  const needFront = lit.some((k) => MUSCLE_VIEW[k] === "front");
+  const needBack = lit.some((k) => MUSCLE_VIEW[k] === "back");
+
+  // Build one figure: outline + every muscle shape for that view, each tagged
+  // with its level class when lit (CSS colors "lit"/"lit2"; unlit stays base).
+  const figure = (shapes, label) => {
+    let g = MM_BODY;
+    Object.keys(shapes).forEach((key) => {
+      if (!shapes[key]) return;
+      const cls = level[key] === "primary" ? "lit" : level[key] === "secondary" ? "lit2" : "";
+      // Inject the class onto each path of this muscle (there may be two).
+      g += shapes[key].replace(/data-muscle=/g, `class="mm-region ${cls}" data-muscle=`);
+    });
+    return `<figure class="mm-fig"><svg viewBox="0 0 120 300" role="img" aria-label="${label} view">${g}</svg>`
+      + `<figcaption>${label}</figcaption></figure>`;
+  };
+
+  let figs = "";
+  if (needFront) figs += figure(MM_FRONT, "Front");
+  if (needBack) figs += figure(MM_BACK, "Back");
+
+  // Legend: primary muscles first (bold), then secondary (muted), named.
+  const chip = (k, isPrimary) =>
+    `<span class="mm-chip ${isPrimary ? "p" : "s"}">${MUSCLE_LABELS[k] || k}</span>`;
+  const legend = primary.map((k) => chip(k, true)).join("")
+    + secondary.filter((k) => MUSCLE_LABELS[k]).map((k) => chip(k, false)).join("");
+
+  return `<div class="mm">${figs}</div><div class="mm-legend">${legend}</div>`;
+}
+
 // Build an inline-SVG line chart of progress over time for one exercise:
 // top-set weight for weighted exercises, reps for bodyweight ones. Single
 // series → no legend (the card title names it); recessive grid; thin accent
@@ -785,9 +912,7 @@ function render() {
       : "No history yet — finish a workout to start tracking.";
     card.innerHTML = `
       <div class="ex-img">
-        <img src="${ex.img}" alt="${ex.name}" loading="lazy"
-             onerror="this.parentElement.classList.add('missing'); this.remove();">
-        <span class="ex-img-ph">Image coming soon</span>
+        ${muscleMapSVG(ex) || '<span class="ex-img-ph">Muscles coming soon</span>'}
       </div>
       <div class="ex-head">
         <span class="ex-num">${ex.n}</span>
