@@ -18,8 +18,10 @@ The web app lives in `docs/` (GitHub Pages serves this folder — see README).
 
 | Path | Purpose |
 |------|---------|
-| [`docs/index.html`](docs/index.html) | The entire app — HTML, CSS (`<style>`), and JS (`<script>`) all inline |
-| [`docs/images/`](docs/images/) | Exercise images + [`README.txt`](docs/images/README.txt) naming guide |
+| [`docs/index.html`](docs/index.html) | The app — HTML, CSS (`<style>`), and most JS (`<script>`) inline |
+| [`docs/exercises.js`](docs/exercises.js) | The `EXERCISES` registry (one entry per movement, keyed by `id`), loaded as a plain `<script src>` |
+| [`docs/body-paths.js`](docs/body-paths.js) | Static anatomical SVG path data for the muscle maps (MIT, see its header), loaded as a plain `<script src>` |
+| [`docs/images/`](docs/images/) | Legacy exercise machine photos (no longer used by the app since the muscle-map switch) + [`README.txt`](docs/images/README.txt) |
 | [`docs/404.html`](docs/404.html) | Redirects unknown paths to the app root (for GitHub Pages) |
 | [`docs/.nojekyll`](docs/.nojekyll) | Tells Pages to skip Jekyll processing |
 | [`Personalized_3_Day_Gym_Training_Plan.md`](Personalized_3_Day_Gym_Training_Plan.md) | The source training plan the app is based on |
@@ -59,16 +61,25 @@ The web app lives in `docs/` (GitHub Pages serves this folder — see README).
     would duplicate the machine link (bodyweight moves point `tg` at a how-to).
 - Export/import is CSV, keyed by `exercise_num` so it's robust to reordering.
   There's a hand-rolled quoted-cell parser (`parseCsvLine`) — no libraries.
-- **Each card's visual is a hand-drawn anatomical muscle map**, not a photo
-  (`muscleMapSVG()`). Two stylized body silhouettes — a front and a back view —
-  carry one inline-SVG shape per muscle region, tagged `data-muscle`. An
-  exercise's `muscles.primary` movers render bright (accent), `muscles.secondary`
-  a dim green, everything else the resting base fill; a named chip legend sits
-  below. The view(s) shown (front, back, or both) are picked automatically from
-  which muscles are lit — see `MUSCLE_VIEW`. To retarget an exercise, edit its
-  `muscles` list in `exercises.js`; to reshape a region or add a new muscle key,
-  edit `MM_FRONT` / `MM_BACK` / `MUSCLE_LABELS` / `MUSCLE_VIEW` in `index.html`.
+- **Each card's visual is an anatomical muscle map**, not a photo
+  (`muscleMapSVG()`). It draws real front/back male-anatomy figures from the
+  per-region SVG path data in [`docs/body-paths.js`](docs/body-paths.js)
+  (`MM_FRONT_PATHS` / `MM_BACK_PATHS`), loaded as a second plain
+  `<script src>` alongside `exercises.js`. Every region is drawn once in a dim
+  base fill to form the whole body, then an exercise's `muscles.primary` movers
+  are redrawn bright (accent) and `muscles.secondary` a mid green on top; a
+  named chip legend sits below. `MM_REGION` in `index.html` maps each app muscle
+  key to a `{ view, slug }` in the path data and decides which view(s) a card
+  shows (front, back, or both) from where the lit muscles sit. To retarget an
+  exercise, edit its `muscles` list in `exercises.js`; to change the key→region
+  mapping or labels, edit `MM_REGION` / `MUSCLE_LABELS` in `index.html`.
   (This replaced per-exercise machine photos in `docs/images/`.)
+  - The path data is lifted (data only, no runtime dependency) from the
+    MIT-licensed `react-native-body-highlighter`; attribution + the 724×1448
+    source-canvas note live in `body-paths.js`'s header. The source anatomy is
+    coarser than our keys in spots — front/side/rear delts all map to one
+    `deltoids` region, lats/mid-back both to `upper-back` — which is why several
+    keys can resolve to the same slug (the legend still names each precisely).
 
 ## Auth & data sync
 
@@ -115,9 +126,14 @@ The web app lives in `docs/` (GitHub Pages serves this folder — see README).
 
 ## Conventions
 
-- **Keep it single-file and build-tool-free.** The Supabase JS client (via ESM
-  CDN import) is the one accepted exception. Don't add a build tool, package
-  manager, framework, or further dependencies unless the user explicitly asks.
+- **Keep it build-tool-free and dependency-light.** The app is "single-file" in
+  spirit: `index.html` holds the HTML/CSS/JS, with two plain `<script src>`
+  siblings for bulky static data (`exercises.js`, `body-paths.js`) — no bundler,
+  no imports, they just define globals. The Supabase JS client (via ESM CDN
+  import) is the one *remote/CDN* dependency. Don't add a build tool, package
+  manager, framework, or any further runtime/CDN dependency unless the user
+  explicitly asks; extracting more static data into a local `<script src>` is
+  fine, pulling in a library is not.
 - Mobile-first: dark theme via CSS vars, safe-area insets, 16px inputs (avoids
   iOS zoom), 44px+ tap targets. Preserve these when editing styles.
 - No test suite or lint config — verify changes by opening `docs/index.html`.
