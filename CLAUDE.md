@@ -29,10 +29,13 @@ The web app lives in `docs/` (GitHub Pages serves this folder — see README).
 
 - All five sessions live in a `const DAYS = {1,2,3,4,5}` object near the top of
   the `<script>` — days 1–3 are the gym days, 4–5 are the Core A/B bodyweight
-  sessions. Each entry has `title`, `sub`, and an `ex` array; each exercise has
-  `n` (label), `name`, `scheme`, `sets` (count), `cue`, `img` path, and optional
+  sessions. Each entry has `title`, `sub`, and an `ex` array; each `ex` entry is
+  just `{ n, id, sets }` referencing a movement in the `EXERCISES` registry
+  (`exercises.js`) by `id`. The registry entry carries `name`, `scheme`, `cue`,
+  a `muscles: { primary, secondary }` list (drives the muscle map), and optional
   `tg` / `howto` reference URLs (see links below).
-  **To change a workout, edit that day's `ex` array** — the UI renders from it.
+  **To change a workout, edit that day's `ex` array** — the UI renders from it;
+  to change an exercise's details or targeted muscles, edit it in `exercises.js`.
 - A 5-tab bar (Day 1/2/3, Core A/B) switches `currentDay`; `selectDay()`
   reloads that day's exercises + progress + history. The chosen day persists
   in `localStorage` (`gym-current-day`).
@@ -56,10 +59,16 @@ The web app lives in `docs/` (GitHub Pages serves this folder — see README).
     would duplicate the machine link (bodyweight moves point `tg` at a how-to).
 - Export/import is CSV, keyed by `exercise_num` so it's robust to reordering.
   There's a hand-rolled quoted-cell parser (`parseCsvLine`) — no libraries.
-- Images load lazily; a missing image triggers `onerror` → "Image coming soon"
-  placeholder. Add a file to `docs/images/` matching the `img:` path and it
-  appears. Prompts for generating them (equipment-only) live in
-  [`image-prompts.md`](image-prompts.md).
+- **Each card's visual is a hand-drawn anatomical muscle map**, not a photo
+  (`muscleMapSVG()`). Two stylized body silhouettes — a front and a back view —
+  carry one inline-SVG shape per muscle region, tagged `data-muscle`. An
+  exercise's `muscles.primary` movers render bright (accent), `muscles.secondary`
+  a dim green, everything else the resting base fill; a named chip legend sits
+  below. The view(s) shown (front, back, or both) are picked automatically from
+  which muscles are lit — see `MUSCLE_VIEW`. To retarget an exercise, edit its
+  `muscles` list in `exercises.js`; to reshape a region or add a new muscle key,
+  edit `MM_FRONT` / `MM_BACK` / `MUSCLE_LABELS` / `MUSCLE_VIEW` in `index.html`.
+  (This replaced per-exercise machine photos in `docs/images/`.)
 
 ## Auth & data sync
 
