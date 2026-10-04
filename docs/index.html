@@ -163,8 +163,8 @@
   .prog-dot  { fill: var(--accent); stroke: var(--card); stroke-width: 2; }
   .prog-axis { fill: var(--muted); font-size: 10px; }
 
-  /* Two CSV buttons share the top row; Reset gets its own full-width row.
-     Grid keeps this stable at every phone width — no overflow, no clipping. */
+  /* Finish and Reset each get their own full-width row. Grid keeps this stable
+     at every phone width — no overflow, no clipping. */
   .footer {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -242,10 +242,7 @@
 
 <div class="footer">
   <button class="act" id="finishBtn" style="grid-column: 1 / -1; background: var(--accent); color: #0b1f14; border-color: var(--accent);">✓ Finish workout &amp; save to history</button>
-  <button class="act" id="exportBtn">⬇ Export CSV</button>
-  <button class="act" id="importBtn">⬆ Import CSV</button>
   <button class="reset" id="resetBtn">Reset</button>
-  <input type="file" id="importFile" accept=".csv" hidden>
 </div>
 </div>
 
@@ -560,11 +557,9 @@ async function loadHistory(day = currentDay) {
   return Array.isArray(cached) ? cached : [];
 }
 
-// Appends one finished session to history (used by "Finish workout") and by
-// CSV import (which replaces the whole day's history). `hist` is the full
-// array in the local shape; only the newly-added session(s) need pushing to
-// Supabase, so callers pass `newEntries` for that — CSV import instead
-// replaces the day's cloud rows wholesale.
+// Caches the full history array (local shape) for a day. Used by "Finish
+// workout"; the cloud push of the new session is done separately by
+// pushHistorySession() so only the newly-added rows are sent.
 function saveHistory(hist, day = currentDay) {
   cacheSet(historyKey(day), hist);
 }
@@ -592,9 +587,10 @@ async function pushHistorySession(day, date, entries) {
   }
 }
 
-// Replaces all of a day's history rows in Supabase with `hist` (local shape).
-// Used by CSV import, which reconstructs history wholesale rather than
-// appending. Queues for retry on failure.
+// Replaces all of a day's history rows in Supabase with `hist` (local shape),
+// reconstructing them wholesale rather than appending. Queues for retry on
+// failure. Currently unused (the CSV import that called it was removed) — kept
+// as a building block for a future "replace a day's history" action.
 async function replaceHistory(day, hist) {
   if (!cloudReady()) return;
   const rows = [];
@@ -942,12 +938,6 @@ function isDone(i) {
   return !!state.sets[i];
 }
 
-// Kept as an alias so CSV export (which reports sets_done/total_sets) still
-// makes sense: an exercise is fully done (all its sets) or not done at all.
-function countDone(i) {
-  return isDone(i) ? dayExercises[i].sets : 0;
-}
-
 function updateProgress() {
   const done = dayExercises.filter((_, i) => isDone(i)).length;
   const total = dayExercises.length;
@@ -1041,136 +1031,6 @@ document.getElementById("finishBtn").addEventListener("click", async () => {
     alert("Saved locally, but couldn't reach the server — it'll retry next time you're online.");
   }
 });
-
-// ---- CSV export / import ----
-// One row per exercise: number, name, sets done, weight, reps, date.
-function csvCell(v) {
-  v = String(v ?? "");
-  return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
-}
-
-document.getElementById("exportBtn").addEventListener("click", () => {
-  const today = localISODate();
-  const header = ["exercise_num", "exercise_name", "sets_done", "total_sets", "weight", "reps", "date"];
-  const rows = dayExercises.map((ex, i) => {
-    const log = state.log[i] || {};
-    return [ex.n, ex.name, countDone(i), ex.sets, log.w || "", log.r || "", today].map(csvCell).join(",");
-  });
-  // Second section: full workout history, one row per (session, exercise).
-  // Blank line + own header keeps it self-describing and re-importable.
-  const histHeader = ["history_date", "exercise_num", "weight", "reps"];
-  const histRows = [];
-  history.forEach((s) => {
-    Object.keys(s.entries).forEach((n) => {
-      const en = s.entries[n];
-      histRows.push([s.date, n, en.w || "", en.r || ""].map(csvCell).join(","));
-    });
-  });
-
-  let csv = header.join(",") + "\n" + rows.join("\n");
-  if (histRows.length) {
-    csv += "\n\n" + histHeader.join(",") + "\n" + histRows.join("\n");
-  }
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `gym-day${currentDay}-${today}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
-});
-
-document.getElementById("importBtn").addEventListener("click", () =>
-  document.getElementById("importFile").click());
-
-document.getElementById("importFile").addEventListener("change", (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = () => {
-    try {
-      applyCsv(reader.result);
-      save();
-      render();
-      alert("Imported. Weights, reps and completed sets were restored.");
-    } catch (err) {
-      alert("Could not read that file. Make sure it's a CSV exported from this app.");
-    }
-    e.target.value = ""; // allow re-importing the same file
-  };
-  reader.readAsText(file);
-});
-
-// Minimal CSV parser that handles quoted cells. The file may contain two
-// blank-line-separated sections: the live session, then (optionally) history.
-// We route each section by its header. Rows match exercises by exercise_num,
-// so it's robust to reordering.
-function applyCsv(text) {
-  // Split into sections on blank lines; each section is header + rows.
-  const sections = text.replace(/\r/g, "").split(/\n\s*\n/)
-    .map((s) => s.split("\n").filter((l) => l.trim() !== ""))
-    .filter((s) => s.length);
-
-  const byNum = {};
-  dayExercises.forEach((ex, i) => (byNum[ex.n] = i));
-
-  sections.forEach((lines) => {
-    const head = parseCsvLine(lines[0]);
-    if (head.includes("sets_done")) applySessionSection(lines, head, byNum);
-    else if (head.includes("history_date")) applyHistorySection(lines, head);
-  });
-}
-
-function applySessionSection(lines, head, byNum) {
-  const col = (name) => head.indexOf(name);
-  const iNum = col("exercise_num"), iDone = col("sets_done"),
-        iW = col("weight"), iR = col("reps");
-  const fresh = { sets: {}, log: {} };
-  for (let r = 1; r < lines.length; r++) {
-    const cells = parseCsvLine(lines[r]);
-    const i = byNum[cells[iNum]];
-    if (i === undefined) continue;
-    fresh.log[i] = { w: cells[iW] || "", r: cells[iR] || "" };
-    const done = parseInt(cells[iDone], 10) || 0;
-    if (done >= dayExercises[i].sets) fresh.sets[i] = true;
-  }
-  state = fresh;
-}
-
-function applyHistorySection(lines, head) {
-  const col = (name) => head.indexOf(name);
-  const iDate = col("history_date"), iNum = col("exercise_num"),
-        iW = col("weight"), iR = col("reps");
-  const byDate = {}; // regroup flat rows back into per-session objects
-  for (let r = 1; r < lines.length; r++) {
-    const cells = parseCsvLine(lines[r]);
-    const date = cells[iDate];
-    if (!date) continue;
-    (byDate[date] = byDate[date] || {})[cells[iNum]] = { w: cells[iW] || "", r: cells[iR] || "" };
-  }
-  history = Object.keys(byDate).sort().map((date) => ({ date, entries: byDate[date] }));
-  saveHistory(history);
-  replaceHistory(currentDay, history).catch(() => {
-    alert("History imported locally, but couldn't sync to the server — it'll retry next time you're online.");
-  });
-}
-
-function parseCsvLine(line) {
-  const out = [];
-  let cur = "", inQ = false;
-  for (let k = 0; k < line.length; k++) {
-    const ch = line[k];
-    if (inQ) {
-      if (ch === '"' && line[k + 1] === '"') { cur += '"'; k++; }
-      else if (ch === '"') inQ = false;
-      else cur += ch;
-    } else if (ch === '"') inQ = true;
-    else if (ch === ",") { out.push(cur); cur = ""; }
-    else cur += ch;
-  }
-  out.push(cur);
-  return out;
-}
 
 window.__gymAppInit = () => {
   if (window.__gymAppStarted) return;
