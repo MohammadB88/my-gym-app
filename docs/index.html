@@ -121,6 +121,23 @@
   }
   .tg-link:hover { border-bottom-color: var(--accent); }
 
+  /* Prominent "watch the movement" button under the muscle map. We can't embed
+     real exercise animations (licensing/offline — see CLAUDE.md), so this is the
+     one-tap path to an actual demo video. Styled as a primary action: accent
+     outline, full-width, 48px tap target. */
+  .demo-btn {
+    display: flex; align-items: center; gap: 8px;
+    width: 100%; min-height: 48px; margin: 0 0 12px; padding: 0 14px;
+    border: 1px solid var(--accent); border-radius: 10px;
+    background: var(--accent-dim); color: var(--accent);
+    font-size: 0.9rem; font-weight: 600; text-decoration: none;
+    touch-action: manipulation; transition: background .12s ease;
+  }
+  .demo-btn:hover, .demo-btn:active { background: var(--accent); color: #0b1f14; }
+  .demo-btn:active { transform: scale(0.99); }
+  .demo-play { font-size: 0.8rem; flex: none; }
+  .demo-ext { margin-left: auto; opacity: 0.7; flex: none; }
+
   .sets { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
   .set-btn {
     min-width: 120px; height: 46px; padding: 0 16px; border-radius: 10px;
@@ -420,9 +437,19 @@ function cloudReady() {
 // goes straight to Supabase, and the cache is updated alongside it purely so
 // the next offline load has something to show.
 
-// state: { sets: { "0": true }, log: { "0": {w:"", r:""} } } — per day;
-// sets[i] is whether exercise i is marked done (not per-set anymore).
+// state: { sets: { "0": true }, log: { "0": {w:"", r:""} }, date: "YYYY-MM-DD" }
+// — per day; sets[i] is whether exercise i is marked done (not per-set anymore).
+// `date` is the day the session was last touched (stamped in save()).
 let state = { sets: {}, log: {} };
+
+// A live session only lasts for the day it was worked on. If the loaded session
+// was last touched before today, it's stale: clear the done-marks and logged
+// numbers so the next session starts fresh. (Finished data is already safe in
+// history.) Returns a usable { sets, log } either way.
+function freshenState(s) {
+  if (!s || s.date !== localISODate()) return { sets: {}, log: {} };
+  return s;
+}
 
 function cacheGet(key) {
   try { return JSON.parse(localStorage.getItem(key)); } catch { return null; }
@@ -492,13 +519,13 @@ async function load(day = currentDay) {
         .eq("day", day)
         .maybeSingle();
       if (!error) {
-        const s = data?.state || { sets: {}, log: {} };
+        const s = freshenState(data?.state);
         cacheSet(storeKey(day), s);
         return s;
       }
     } catch {}
   }
-  return cacheGet(storeKey(day)) || { sets: {}, log: {} };
+  return freshenState(cacheGet(storeKey(day)));
 }
 
 let sessionPushTimer = null;
@@ -506,6 +533,9 @@ let sessionPushTimer = null;
 // every keystroke) and refreshes the cache immediately. Queues for retry on
 // failure rather than losing the write.
 function save(day = currentDay, s = state) {
+  // Stamp the session with the day it was last touched so a stale session
+  // (from a previous day) gets cleared on next load — see freshenState().
+  s.date = localISODate();
   cacheSet(storeKey(day), s);
   if (!cloudReady()) return;
   clearTimeout(sessionPushTimer);
@@ -647,7 +677,7 @@ async function selectDay(day) {
   document.querySelectorAll(".tab").forEach((t) =>
     t.classList.toggle("on", +t.dataset.day === day));
 
-  state = cacheGet(storeKey(day)) || { sets: {}, log: {} };
+  state = freshenState(cacheGet(storeKey(day)));
   const cachedHist = cacheGet(historyKey(day));
   history = Array.isArray(cachedHist) ? cachedHist : [];
   render();
@@ -721,6 +751,35 @@ function howtoLink(ex) {
   const q = `${ex.name} proper form technique`;
   return { href: "https://www.youtube.com/results?search_query=" + encodeURIComponent(q),
            label: "▶ Watch form videos ↗" };
+}
+
+// The single best "see the movement" link for an exercise, surfaced as the
+// prominent demo button on each card. We can't embed real exercise animations
+// (the good ones are all copyrighted / would break offline use — see CLAUDE.md),
+// so the next-best "correct way to do it" is a one-tap link to a real demo.
+// Order of preference: a curated how-to page (`ex.howto`, mostly ACE Fitness
+// with a demo video) → a `tg` link that is itself a how-to page (bodyweight
+// moves point `tg` at ACE) → a YouTube form-video search (always resolves).
+// Always returns a link, so every card gets a demo button.
+function movementDemoLink(ex) {
+  if (ex.howto) return { href: ex.howto, label: "Watch how to do it" };
+  const tgIsHowto = ex.tg && !/(^|\.)technogym\.com$/i.test(new URL(ex.tg).hostname);
+  if (tgIsHowto) return { href: ex.tg, label: "Watch how to do it" };
+  const q = `${ex.name} proper form technique`;
+  return { href: "https://www.youtube.com/results?search_query=" + encodeURIComponent(q),
+           label: "Watch form videos" };
+}
+
+// The machine reference link for the secondary row — but only when it's a real
+// Technogym machine page, not a how-to (the how-to is already surfaced as the
+// prominent demo button, so we don't want to repeat it here). Returns null when
+// there's no distinct machine page to show.
+function machineRefLink(ex) {
+  const link = technogymLink(ex);
+  // technogymLink points at a how-to page for bodyweight moves ("See how to do
+  // this exercise…") — that's the demo, already shown above, so skip it.
+  if (ex.tg && !/(^|\.)technogym\.com$/i.test(new URL(ex.tg).hostname)) return null;
+  return link;
 }
 
 // ---- Anatomical muscle map ----
@@ -892,8 +951,8 @@ function render() {
 
     if (!state.log[i] && ex.defaultWeight) state.log[i] = { w: ex.defaultWeight };
     const log = state.log[i] || {};
-    const tg = technogymLink(ex);
-    const howto = howtoLink(ex);
+    const demo = movementDemoLink(ex);   // prominent "watch the movement" button
+    const machine = machineRefLink(ex);  // subtle machine-page link (null if none)
     const last = lastFor(ex.n);
     const lastHint = last
       ? ex.bodyweight
@@ -904,6 +963,11 @@ function render() {
       <div class="ex-img">
         ${muscleMapSVG(ex) || '<span class="ex-img-ph">Muscles coming soon</span>'}
       </div>
+      <a class="demo-btn" href="${demo.href}" target="_blank" rel="noopener noreferrer">
+        <span class="demo-play" aria-hidden="true">▶</span>
+        <span>${demo.label}</span>
+        <span class="demo-ext" aria-hidden="true">↗</span>
+      </a>
       <div class="ex-head">
         <span class="ex-num">${ex.n}</span>
         <span class="ex-name">${ex.name}</span>
@@ -911,10 +975,9 @@ function render() {
       </div>
       <div class="ex-meta">${ex.scheme}</div>
       <div class="cue">${ex.cue}</div>
-      <div class="ref-links">
-        <a class="tg-link" href="${tg.href}" target="_blank" rel="noopener noreferrer">${tg.label}</a>
-        ${howto ? `<a class="tg-link" href="${howto.href}" target="_blank" rel="noopener noreferrer">${howto.label}</a>` : ""}
-      </div>
+      ${machine ? `<div class="ref-links">
+        <a class="tg-link" href="${machine.href}" target="_blank" rel="noopener noreferrer">${machine.label}</a>
+      </div>` : ""}
       <div class="sets">${doneBtn}</div>
       <div class="log">
         ${ex.bodyweight ? "" : `<input type="text" inputmode="decimal" placeholder="Weight" data-log="w" data-ex="${i}" value="${log.w || ""}">`}
