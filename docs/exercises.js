@@ -5,8 +5,9 @@
 // differently per day, so each day's `ex` entry carries its own `img` path.
 //
 // Fields: name, scheme (sets x reps · rest), cue, and optional tg / howto
-// reference URLs (see index.html's technogymLink()/howtoLink() for how these
-// are used).
+// reference URLs (see index.html's movementDemoLink()/machineRefLink() for how
+// these are used — `howto`/`tg` feed the prominent "watch how to do it" button
+// and the secondary machine link).
 //
 // `muscles` drives the anatomical muscle map on each card (see index.html's
 // muscleMapSVG()): { primary: [...], secondary: [...] } using the muscle keys

@@ -733,26 +733,6 @@ function technogymLink(ex) {
   };
 }
 
-// Returns { href, label } for the "how to do this" link, or null if it would
-// duplicate the machine link (bodyweight moves already point their tg link at a
-// how-to page). Prefers an exact page (`ex.howto`, e.g. an ACE Fitness exercise-
-// library page with a demo video); falls back to a YouTube search — which always
-// resolves to current results even if a specific video is removed.
-function howtoLink(ex) {
-  // If the machine link already points at a how-to page (bodyweight moves link
-  // their `tg` to ACE), don't add a second how-to link.
-  const tgIsHowto = ex.tg && !/(^|\.)technogym\.com$/i.test(new URL(ex.tg).hostname);
-  if (ex.howto) {
-    if (ex.tg === ex.howto) return null;
-    return { href: ex.howto, label: "▶ How to do this exercise ↗" };
-  }
-  if (tgIsHowto) return null;
-  // No curated page: search YouTube for a form demo of this movement.
-  const q = `${ex.name} proper form technique`;
-  return { href: "https://www.youtube.com/results?search_query=" + encodeURIComponent(q),
-           label: "▶ Watch form videos ↗" };
-}
-
 // The single best "see the movement" link for an exercise, surfaced as the
 // prominent demo button on each card. We can't embed real exercise animations
 // (the good ones are all copyrighted / would break offline use — see CLAUDE.md),
@@ -773,13 +753,15 @@ function movementDemoLink(ex) {
 // The machine reference link for the secondary row — but only when it's a real
 // Technogym machine page, not a how-to (the how-to is already surfaced as the
 // prominent demo button, so we don't want to repeat it here). Returns null when
-// there's no distinct machine page to show.
+// there's no distinct machine page to show (bodyweight moves, or a `tg` that is
+// itself a how-to page).
 function machineRefLink(ex) {
-  const link = technogymLink(ex);
-  // technogymLink points at a how-to page for bodyweight moves ("See how to do
-  // this exercise…") — that's the demo, already shown above, so skip it.
+  // Bodyweight moves have no machine — don't offer a "find this machine" search.
+  if (ex.bodyweight) return null;
+  // A `tg` pointing at a how-to page (not technogym.com) is the demo, already
+  // shown above as the prominent button — skip it here to avoid duplication.
   if (ex.tg && !/(^|\.)technogym\.com$/i.test(new URL(ex.tg).hostname)) return null;
-  return link;
+  return technogymLink(ex);
 }
 
 // ---- Anatomical muscle map ----

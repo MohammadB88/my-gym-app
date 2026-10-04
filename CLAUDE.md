@@ -51,14 +51,22 @@ The web app lives in `docs/` (GitHub Pages serves this folder — see README).
   See "Auth & data sync" below for where this state actually lives.
 - `render()` rebuilds the DOM from state; click/input are handled via event
   delegation on `#list`. Call `save()` then `render()` after mutating `state`.
-- Each card has two reference links, built in `render()`:
-  - **Machine** (`technogymLink()`): the exact Technogym product page from
-    `ex.tg` when set ("View this machine…"), else a Google site-search fallback
-    ("Find this machine…", via `technogymSearchLink()`). Direct URLs are used
-    because Technogym 403s bots and has unstable URLs — verify by hand, not fetch.
-  - **How-to** (`howtoLink()`): an exercise how-to page from `ex.howto` (mostly
-    ACE Fitness) when set, else a YouTube form-video search. Suppressed when it
-    would duplicate the machine link (bodyweight moves point `tg` at a how-to).
+- Each card surfaces links in two places, built in `render()`:
+  - **Movement demo** (`movementDemoLink()`): a prominent, accent-outlined
+    full-width button (`.demo-btn`, "▶ Watch how to do it") directly under the
+    muscle map — the deliberate "show me the correct way to do it" affordance,
+    since real exercise animations can't be embedded (licensing + offline — see
+    the muscle-map bullet). Always returns a link: a curated how-to page
+    (`ex.howto`, mostly ACE Fitness with a demo video) → a `tg` that is itself a
+    how-to page (bodyweight moves point `tg` at ACE) → a YouTube form-video
+    search ("Watch form videos", always resolves).
+  - **Machine** (`machineRefLink()` → `technogymLink()`): a subtle secondary
+    text link below the cue — the exact Technogym product page from `ex.tg`
+    ("View this machine…"), else a Google site-search fallback ("Find this
+    machine…", via `technogymSearchLink()`). Direct URLs are used because
+    Technogym 403s bots and has unstable URLs — verify by hand, not fetch.
+    Suppressed entirely for bodyweight moves and when `tg` is a how-to page (the
+    demo button already shows it), so it never duplicates the demo.
 - Export/import is CSV, keyed by `exercise_num` so it's robust to reordering.
   There's a hand-rolled quoted-cell parser (`parseCsvLine`) — no libraries.
 - **Each card's visual is an anatomical muscle map**, not a photo
